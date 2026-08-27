@@ -1,0 +1,5701 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>RoundCoach | VALORANT 試合後分析</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #0f1923;
+  color: white;
+  padding: 24px;
+  margin: 0;
+}
+
+h1 {
+  color: #ff4655;
+  margin-bottom: 24px;
+}
+
+h2 {
+  color: white;
+  margin-top: 28px;
+}
+
+.input-area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+input, select, button {
+  padding: 8px 10px;
+  margin: 4px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+}
+
+button {
+  background: #ff4655;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 22px 0;
+}
+
+.summary-card {
+  background: #162331;
+  border: 1px solid #2f4052;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+
+.summary-card-title {
+  color: #9fb0c2;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.summary-card-value {
+  color: #ff4655;
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.analysis-box {
+  background: #162331;
+  border: 1px solid #2f4052;
+  border-radius: 14px;
+  padding: 18px;
+  margin: 22px 0;
+}
+
+.analysis-box h2 {
+  color: #ff4655;
+  margin-top: 0;
+}
+
+.analysis-comment {
+  background: #0f1b26;
+  border-left: 4px solid #ff4655;
+  padding: 12px 14px;
+  margin: 10px 0;
+  border-radius: 6px;
+  line-height: 1.7;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  background: #162331;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #2f4052;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: #1f2a36;
+  min-width: 900px;
+}
+
+th, td {
+  border: 1px solid #444;
+  padding: 9px;
+  text-align: center;
+}
+
+th {
+  background: #2f3b48;
+  color: #ffffff;
+}
+
+.agent-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.agent-cell img {
+  width: 32px;
+  height: 32px;
+}
+
+.win {
+  color: #4ade80;
+  font-weight: bold;
+}
+
+.lose {
+  color: #ff4655;
+  font-weight: bold;
+}
+
+.graph-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.graph-card {
+  background: #162331;
+  border: 1px solid #2f4052;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.graph-card h2 {
+  margin-top: 0;
+  color: #ff4655;
+}
+
+canvas {
+  width: 100%;
+  background: #0f1b26;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.loading {
+  color: #9fb0c2;
+  margin: 12px 0;
+}
+
+.error {
+  color: #ff4655;
+  margin: 12px 0;
+  font-weight: bold;
+}
+
+@media (max-width: 1000px) {
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .graph-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.analysis-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+  margin-bottom: 18px;
+  background: #111d27;
+  border: 1px solid #2c3944;
+  border-radius: 10px;
+}
+
+.analysis-grade {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  background: #ff4655;
+  color: white;
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.analysis-summary-title {
+  margin-bottom: 6px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.analysis-summary-text {
+  color: #c7d0d8;
+  line-height: 1.7;
+}
+
+.analysis-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: #111d27;
+  border-radius: 10px;
+  border-left: 4px solid #888;
+}
+
+.analysis-section h3 {
+  margin: 0 0 12px;
+  font-size: 17px;
+}
+
+.analysis-section.strength {
+  border-left-color: #36d399;
+}
+
+.analysis-section.weakness {
+  border-left-color: #ff6b6b;
+}
+
+.analysis-section.recommendation {
+  border-left-color: #f7c948;
+}
+
+.analysis-section.notice {
+  border-left-color: #7aa7ff;
+}
+
+.analysis-list {
+  display: grid;
+  gap: 10px;
+}
+
+.analysis-item {
+  padding: 11px 13px;
+  background: #182631;
+  border-radius: 7px;
+  color: #e8edf2;
+  line-height: 1.65;
+}
+
+
+.analysis-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid #3b4b59;
+  border-radius: 999px;
+  background: #182631;
+  color: #dbe5ed;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.analysis-role-note {
+  margin-top: 8px;
+  color: #9fb0c2;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+
+
+/* 試合詳細パネル */
+.match-row {
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.match-row:hover {
+  background: #293847;
+}
+
+.match-row:focus-visible {
+  outline: 2px solid #ff4655;
+  outline-offset: -2px;
+}
+
+.detail-hint {
+  color: #9fb0c2;
+  font-size: 13px;
+  margin: 10px 0 12px;
+}
+
+.detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(4, 10, 16, 0.7);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.detail-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.detail-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(1040px, 96vw);
+  height: 100%;
+  overflow-y: auto;
+  background: #0f1923;
+  border-left: 1px solid #344657;
+  box-shadow: -14px 0 40px rgba(0, 0, 0, 0.45);
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+}
+
+.detail-overlay.open .detail-panel {
+  transform: translateX(0);
+}
+
+.detail-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  background: rgba(15, 25, 35, 0.96);
+  border-bottom: 1px solid #2f4052;
+  backdrop-filter: blur(10px);
+}
+
+.detail-header h2 {
+  margin: 0;
+  color: #ff4655;
+}
+
+.detail-close {
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.detail-content {
+  padding: 20px;
+}
+
+.detail-loading,
+.detail-error {
+  padding: 22px;
+  border-radius: 12px;
+  background: #162331;
+  color: #c7d0d8;
+}
+
+.detail-error {
+  color: #ff8d96;
+  border: 1px solid #7e3038;
+}
+
+.detail-hero {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 18px;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid #2f4052;
+  border-radius: 16px;
+  background: #162331;
+}
+
+.detail-agent-icon {
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #0f1b26;
+}
+
+.detail-map {
+  margin: 0 0 4px;
+  font-size: 28px;
+}
+
+.detail-subtitle {
+  color: #9fb0c2;
+  margin-bottom: 10px;
+}
+
+.detail-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.detail-stat {
+  padding: 14px;
+  border-radius: 12px;
+  background: #162331;
+  border: 1px solid #2f4052;
+  text-align: center;
+}
+
+.detail-stat-label {
+  color: #9fb0c2;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.detail-stat-value {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.detail-section {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 14px;
+  background: #162331;
+  border: 1px solid #2f4052;
+}
+
+.detail-section h3 {
+  margin: 0 0 14px;
+  color: #ff4655;
+}
+
+.team-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.team-card {
+  overflow: hidden;
+  border: 1px solid #35495b;
+  border-radius: 12px;
+  background: #111d27;
+}
+
+.team-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  font-weight: bold;
+  background: #22303d;
+}
+
+.team-score {
+  min-width: 30px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  text-align: center;
+  font-size: 14px;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid #283846;
+}
+
+.player-row.me {
+  background: rgba(255, 70, 85, 0.13);
+}
+
+.player-agent {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-stats {
+  color: #c7d0d8;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.round-list {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(48px, 1fr));
+  gap: 8px;
+}
+
+.round-half {
+  padding: 14px;
+  border-radius: 12px;
+  background: #111d27;
+  border: 1px solid #2f4052;
+}
+
+.round-half + .round-half {
+  margin-top: 12px;
+}
+
+.round-half-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.round-half-label {
+  color: #dce7ef;
+  font-size: 14px;
+}
+
+.round-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.round-group {
+  padding: 14px;
+  border-radius: 12px;
+  background: #111d27;
+  border: 1px solid #2f4052;
+}
+
+.round-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.side-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.side-badge.attack {
+  color: #ff9aa2;
+  background: rgba(255, 70, 85, 0.14);
+  border: 1px solid #ff4655;
+}
+
+.side-badge.defense {
+  color: #7ddcff;
+  background: rgba(0, 180, 255, 0.12);
+  border: 1px solid #45bde8;
+}
+
+.team-card.ally-team {
+  border-color: #45bde8;
+}
+
+.team-card.enemy-team {
+  border-color: #ff6b6b;
+}
+
+.team-card.ally-team .team-title {
+  color: #8de3ff;
+}
+
+.team-card.enemy-team .team-title {
+  color: #ff9aa2;
+}
+
+.detail-date {
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.round-item {
+  min-width: 48px;
+  min-height: 112px;
+  padding: 8px 5px;
+  border-radius: 8px;
+  background: #111d27;
+  border: 1px solid #344657;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  text-align: center;
+  font-size: 12px;
+}
+
+.round-item.win-round {
+  border-color: #36d399;
+  color: #7cf0c4;
+}
+
+.round-item.lose-round {
+  border-color: #ff6b6b;
+  color: #ff9aa2;
+}
+
+.round-reason-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.win-round .round-reason-icon {
+  filter: brightness(0) saturate(100%) invert(83%) sepia(31%) saturate(1071%) hue-rotate(102deg) brightness(94%) contrast(91%);
+}
+
+.lose-round .round-reason-icon {
+  filter: brightness(0) saturate(100%) invert(66%) sepia(45%) saturate(2966%) hue-rotate(314deg) brightness(102%) contrast(101%);
+}
+
+.round-number {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.round-result {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.round-reason-unknown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #91a4b7;
+  font-size: 15px;
+  font-weight: 700;
+  filter: none !important;
+}
+
+.round-loadout-chart {
+  width: 100%;
+  margin-top: 4px;
+  display: grid;
+  gap: 3px;
+}
+
+.round-loadout-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  align-items: center;
+  gap: 3px;
+}
+
+.round-loadout-label {
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ally-label { color: #55c7ff; }
+.enemy-label { color: #ff6b78; }
+
+.round-loadout-track {
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #263746;
+}
+
+.round-loadout-bar {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+}
+
+.ally-bar { background: #55c7ff; }
+.enemy-bar { background: #ff6b78; }
+
+.detail-analysis-placeholder {
+  line-height: 1.7;
+  color: #c7d0d8;
+}
+
+
+.detail-analysis-card {
+  background: linear-gradient(135deg, #111d27, #182631);
+  border: 1px solid #3b4b59;
+  border-radius: 14px;
+  padding: 18px;
+}
+.analysis-score-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 18px;
+  align-items: center;
+}
+.analysis-score-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 6px solid #ff4655;
+  background: #0f1923;
+}
+.analysis-score-number { font-size: 34px; font-weight: 800; }
+.analysis-score-label { color: #9fb0c2; font-size: 12px; }
+.analysis-grade-line { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+.analysis-stars { color: #ffd166; letter-spacing: 2px; margin-bottom: 8px; }
+.analysis-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+.analysis-mini { background: #0f1923; border-radius: 10px; padding: 14px; }
+.analysis-mini h4 { margin: 0 0 10px; }
+.analysis-mini ul { margin: 0; padding-left: 20px; line-height: 1.7; }
+
+.analysis-top-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,70,85,.12), rgba(22,35,49,.96) 42%, rgba(17,29,39,.98));
+  border: 1px solid #445666;
+  border-radius: 16px;
+  padding: 20px;
+}
+.analysis-top-card::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -90px;
+  top: -110px;
+  border-radius: 50%;
+  background: rgba(255,70,85,.10);
+  pointer-events: none;
+}
+.analysis-eyebrow {
+  color: #ff8d96;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  margin-bottom: 8px;
+}
+.analysis-score-circle {
+  border: 2px solid #ff4655;
+  box-shadow: 0 0 28px rgba(255,70,85,.18);
+}
+.analysis-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: #ffe7a6;
+  background: rgba(247,201,72,.10);
+  border: 1px solid rgba(247,201,72,.45);
+  font-size: 13px;
+  font-weight: 700;
+}
+.analysis-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+.analysis-metric {
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(15,25,35,.78);
+  border: 1px solid #334656;
+}
+.analysis-metric-label { color: #91a5b7; font-size: 11px; margin-bottom: 4px; }
+.analysis-metric-value { font-size: 18px; font-weight: 800; }
+.analysis-metric-note { color: #aebcca; font-size: 11px; margin-top: 3px; }
+.analysis-data-note {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #31404d;
+  color: #8fa2b3;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.analysis-columns { align-items: stretch; }
+.analysis-mini { border: 1px solid #2e4050; }
+.analysis-mini.good { border-top: 3px solid #36d399; }
+.analysis-mini.bad { border-top: 3px solid #ff6b6b; }
+.side-analysis-grid, .weapon-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.side-card, .weapon-card { background:#111d27; border:1px solid #344657; border-radius:10px; padding:14px; }
+.side-card strong, .weapon-card strong { font-size:20px; }
+.round-detail-grid { display:grid; grid-template-columns:repeat(4,minmax(130px,1fr)); gap:10px; }
+.round-detail-card { background:#111d27; border:1px solid #344657; border-radius:10px; padding:12px; }
+.round-detail-card.win-round { border-color:#36d399; }
+.round-detail-card.lose-round { border-color:#ff6b6b; }
+.round-detail-head { display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px; }
+.round-detail-meta { color:#b9c6d2; line-height:1.6; font-size:13px; }
+.flow-strip { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+.flow-dot { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; font-size:12px; font-weight:bold; }
+.flow-dot.win-round { background:#173d34; color:#7cf0c4; }
+.flow-dot.lose-round { background:#49242a; color:#ff9aa2; }
+@media (max-width: 800px) {
+  .analysis-columns, .side-analysis-grid, .weapon-grid { grid-template-columns: 1fr; }
+  .round-detail-grid { grid-template-columns: repeat(2,minmax(120px,1fr)); }
+  .analysis-score-row { grid-template-columns: 1fr; }
+}
+
+
+.list-rating-cell { min-width: 190px; }
+.list-rating-card {
+  display: grid;
+  grid-template-columns: 44px 54px 1fr;
+  align-items: center;
+  gap: 8px;
+  min-width: 180px;
+}
+.list-grade {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  font-weight: 900;
+  border: 1px solid currentColor;
+}
+.list-grade.grade-s { color:#d8a6ff; background:#342347; }
+.list-grade.grade-a { color:#7cf0c4; background:#173d34; }
+.list-grade.grade-b { color:#7ec8ff; background:#19354a; }
+.list-grade.grade-c { color:#ffd77c; background:#44391c; }
+.list-grade.grade-d { color:#ff9aa2; background:#49242a; }
+.list-score { font-size: 19px; font-weight: 800; white-space: nowrap; }
+.list-score small { color:#8fa2b3; font-size:11px; font-weight:normal; }
+.list-stars { color:#ffd36a; font-size:12px; white-space:nowrap; }
+.list-highlight {
+  color:#9fb0c2;
+  font-size:11px;
+  line-height:1.35;
+  max-width:155px;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+.rating-loading { color:#8fa2b3; font-size:12px; }
+.rating-error { color:#ff9aa2; font-size:12px; }
+body.panel-open {
+  overflow: hidden;
+}
+
+@media (max-width: 700px) {
+  .detail-panel {
+    width: 100vw;
+  }
+
+  .detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .team-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .round-list {
+    grid-template-columns: repeat(5, minmax(42px, 1fr));
+  }
+}
+
+
+
+/* 試合後評価：ベストラウンド・優先して見直したいラウンド・次回アクション */
+.best-round-card {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #f7c948;
+  background: linear-gradient(135deg, rgba(247, 201, 72, 0.15), #111d27 55%);
+}
+.best-round-eyebrow { color:#f7c948; font-size:11px; font-weight:800; letter-spacing:.12em; }
+.best-round-number { margin-top:4px; color:#ffe394; font-size:34px; font-weight:900; }
+.best-round-data { display:grid; gap:6px; color:#cbd7e1; }
+.best-round-data strong { color:white; font-size:18px; }
+.important-round-list { display:grid; gap:10px; }
+.important-round-card { padding:14px; border-radius:12px; border:1px solid #344657; background:#111d27; }
+.important-round-card.important-warning { border-left:4px solid #ff6b6b; }
+.important-round-card.important-highlight { border-left:4px solid #f7c948; }
+.important-round-card.important-good { border-left:4px solid #36d399; }
+.important-round-card.important-notice { border-left:4px solid #55c7ff; }
+.important-round-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.important-round-badge { display:inline-block; margin-right:8px; padding:4px 7px; border-radius:999px; background:rgba(255,255,255,.08); color:#cbd7e1; font-size:11px; }
+.important-round-stats { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; color:#aebdca; font-size:12px; }
+.important-round-reasons { margin:10px 0 0; padding-left:20px; color:#e2e9ef; line-height:1.65; }
+.next-action-list { display:grid; gap:10px; }
+.next-action-card { display:grid; grid-template-columns:32px 1fr; align-items:center; gap:12px; padding:13px 14px; border-radius:11px; border:1px solid #344657; background:#111d27; line-height:1.65; }
+.next-action-number { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#ff4655; color:white; font-weight:800; }
+@media (max-width: 600px) {
+  .best-round-card { grid-template-columns: 1fr; }
+}
+
+
+/* 集計グラフ：高解像度表示・数値一覧 */
+.graph-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0f1b26;
+}
+
+.graph-canvas-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  padding: 0;
+}
+
+.kd-number-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.kd-number-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #2f4052;
+  border-radius: 9px;
+  background: #111d27;
+}
+
+.kd-number-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.kd-number-games {
+  color: #8fa2b3;
+  font-size: 12px;
+}
+
+.kd-number-value {
+  min-width: 52px;
+  text-align: right;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.kd-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.kd-summary-card {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #344657;
+  background: #111d27;
+}
+
+.kd-summary-label {
+  color: #91a5b7;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.kd-summary-name {
+  font-weight: 800;
+}
+
+.kd-summary-value {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.kd-summary-card.best {
+  border-top: 3px solid #36d399;
+}
+
+.kd-summary-card.weak {
+  border-top: 3px solid #ff6b6b;
+}
+
+.player-rank {
+  width: 22px;
+  color: #8fa2b3;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.player-row {
+  grid-template-columns: 22px 36px minmax(0, 1fr) auto;
+}
+
+.player-stats {
+  text-align: right;
+}
+
+.player-acs {
+  display: block;
+  margin-top: 2px;
+  color: #8fa2b3;
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .kd-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .graph-canvas-wrap {
+    height: 240px;
+  }
+}
+
+/* キル位置ミニマップ */
+.kill-map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.kill-map-toolbar label { color:#cbd7e1; font-weight:700; }
+.kill-map-select {
+  min-width: 120px;
+  background:#0f1923;
+  color:#fff;
+  border:1px solid #3a4d5f;
+}
+.kill-map-stage {
+  position: relative;
+  width: min(100%, 720px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 16px;
+  background:#09131d;
+  border:1px solid #344657;
+}
+.kill-map-image {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  user-select:none;
+  pointer-events:none;
+}
+.kill-map-svg {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+.kill-map-line { stroke-width:0.42; opacity:.72; }
+.kill-map-line.my-kill { stroke:#36d399; }
+.kill-map-line.my-death { stroke:#ff6b6b; }
+.kill-map-line.other-kill { stroke:#7aa7ff; opacity:.48; }
+.kill-map-marker { stroke:#071019; stroke-width:.32; cursor:pointer; }
+.kill-map-marker.killer.my-kill { fill:#36d399; }
+.kill-map-marker.victim.my-kill { fill:#9df5d5; }
+.kill-map-marker.killer.my-death { fill:#ff6b6b; }
+.kill-map-marker.victim.my-death { fill:#ffb0b6; }
+.kill-map-marker.killer.other-kill { fill:#7aa7ff; }
+.kill-map-marker.victim.other-kill { fill:#b5d5ff; }
+.kill-map-number {
+  fill:#06101a;
+  font-size:2.3px;
+  font-weight:900;
+  text-anchor:middle;
+  dominant-baseline:central;
+  pointer-events:none;
+}
+.kill-map-legend {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:12px;
+  margin-top:12px;
+  color:#aebdca;
+  font-size:12px;
+}
+.kill-map-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+.kill-map-dot.mine { background:#36d399; }
+.kill-map-dot.death { background:#ff6b6b; }
+.kill-map-dot.other { background:#7aa7ff; }
+.kill-map-event-list { display:grid; gap:8px; margin-top:14px; }
+.kill-map-event {
+  padding:10px 12px;
+  border-radius:9px;
+  background:#111d27;
+  border:1px solid #314354;
+  color:#dbe5ed;
+  font-size:13px;
+  line-height:1.55;
+}
+.kill-map-event strong { color:white; }
+
+
+.round-analysis-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px solid #45bde8;
+  border-radius: 9px;
+  background: rgba(69,189,232,.10);
+  color: #8de3ff;
+  font-weight: 800;
+  text-decoration: none;
+}
+.round-analysis-link:hover {
+  background: rgba(69,189,232,.18);
+}
+
+
+/* キルマップ：エージェントアイコン表示 */
+.kill-map-stage { isolation:isolate; }
+.kill-map-svg { z-index:2; pointer-events:none; }
+.kill-map-marker-layer { position:absolute; inset:0; z-index:3; pointer-events:none; }
+.kill-map-agent-marker { position:absolute; width:38px; height:38px; transform:translate(-50%,-50%); border-radius:50%; pointer-events:auto; cursor:help; filter:drop-shadow(0 5px 8px rgba(0,0,0,.55)); transition:transform .14s ease,filter .14s ease; }
+.kill-map-agent-marker:hover { transform:translate(-50%,-50%) scale(1.16); filter:drop-shadow(0 7px 13px rgba(0,0,0,.72)); z-index:20; }
+.kill-map-agent-frame { position:absolute; inset:0; overflow:hidden; border:3px solid #7aa7ff; border-radius:50%; background:#111d27; box-shadow:0 0 0 2px rgba(5,12,18,.88); }
+.kill-map-agent-marker.ally .kill-map-agent-frame { border-color:#55c7ff; }
+.kill-map-agent-marker.enemy .kill-map-agent-frame { border-color:#ff5f6d; }
+.kill-map-agent-marker.me .kill-map-agent-frame { border-color:#ffd166; box-shadow:0 0 0 2px rgba(5,12,18,.92),0 0 14px rgba(255,209,102,.9); }
+.kill-map-agent-marker.victim { opacity:.82; }
+.kill-map-agent-marker.victim .kill-map-agent-frame { filter:grayscale(.18) brightness(.82); }
+.kill-map-agent-image { width:100%; height:100%; object-fit:cover; display:block; }
+.kill-map-agent-fallback { width:100%; height:100%; display:grid; place-items:center; color:#fff; font-size:13px; font-weight:900; }
+.kill-map-order-badge { position:absolute; right:-5px; top:-6px; min-width:18px; height:18px; padding:0 4px; display:grid; place-items:center; border:2px solid #08121b; border-radius:999px; background:#f7c948; color:#101820; font-size:10px; font-weight:900; line-height:1; }
+.kill-map-role-badge { position:absolute; left:50%; bottom:-9px; transform:translateX(-50%); padding:2px 5px; border:1px solid rgba(255,255,255,.25); border-radius:999px; background:rgba(5,13,20,.92); color:#e7eef4; font-size:8px; font-weight:800; white-space:nowrap; }
+.kill-map-line { stroke-width:.48; stroke-linecap:round; opacity:.76; }
+.kill-map-line.my-kill { stroke:#36d399; filter:drop-shadow(0 0 2px rgba(54,211,153,.8)); }
+.kill-map-line.my-death { stroke:#ff6b6b; filter:drop-shadow(0 0 2px rgba(255,107,107,.8)); }
+.kill-map-line.other-kill { stroke:#9aa9b7; opacity:.52; }
+.kill-map-event { display:grid; grid-template-columns:38px minmax(0,1fr) 38px; align-items:center; gap:10px; }
+.kill-map-event-agent { width:34px; height:34px; overflow:hidden; border:2px solid #3a4f60; border-radius:50%; background:#0b1721; }
+.kill-map-event-agent.ally { border-color:#55c7ff; }
+.kill-map-event-agent.enemy { border-color:#ff5f6d; }
+.kill-map-event-agent.me { border-color:#ffd166; }
+.kill-map-event-agent img { width:100%; height:100%; object-fit:cover; }
+.kill-map-event-main { min-width:0; }
+.kill-map-event-title { overflow:hidden; color:#fff; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
+.kill-map-event-meta { margin-top:2px; color:#9fb0c2; font-size:11px; }
+.kill-map-event-arrow { color:#8194a5; text-align:center; font-weight:900; }
+@media (max-width:600px){ .kill-map-agent-marker{width:31px;height:31px;} }
+
+
+/* 小型アイコン＋方向矢印 */
+.kill-map-agent-marker,
+.kill-map-agent-marker.victim {
+  width:30px !important;
+  height:30px !important;
+  opacity:1 !important;
+}
+.kill-map-agent-frame { border-width:2px !important; }
+.kill-map-agent-marker.victim .kill-map-agent-frame {
+  filter:brightness(.82) saturate(.9) !important;
+}
+.kill-map-role-badge { display:none !important; }
+.kill-map-agent-marker.killer .kill-map-order-badge { background:#36d399; }
+.kill-map-agent-marker.victim .kill-map-order-badge {
+  left:-5px; right:auto; background:#ff6b6b; color:#fff;
+}
+.kill-map-line { stroke-width:.55 !important; opacity:.88 !important; }
+.kill-map-event {
+  grid-template-columns:24px 34px minmax(0,1fr) 34px !important;
+}
+.kill-map-event-number {
+  width:22px;height:22px;display:grid;place-items:center;
+  border-radius:50%;background:#f7c948;color:#111820;
+  font-size:11px;font-weight:900;
+}
+.kill-map-event-agent { width:31px !important;height:31px !important; }
+@media(max-width:600px){
+  .kill-map-agent-marker,.kill-map-agent-marker.victim{
+    width:25px !important;height:25px !important;
+  }
+}
+
+/* 分析結果からラウンド分析へ移動 */
+.important-round-footer,
+.best-round-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.round-review-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid #45bde8;
+  border-radius: 8px;
+  background: rgba(69, 189, 232, .1);
+  color: #9be5ff;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.round-review-link:hover {
+  background: rgba(69, 189, 232, .2);
+  opacity: 1;
+}
+
+.round-review-link.warning {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, .09);
+  color: #ffb3b9;
+}
+
+.round-review-link.warning:hover {
+  background: rgba(255, 107, 107, .17);
+}
+
+
+/* 公開向けヘッダー・検索UI */
+body {
+  padding: 0;
+  background:
+    radial-gradient(circle at 12% -10%, rgba(255,70,85,.16), transparent 32%),
+    radial-gradient(circle at 88% 4%, rgba(69,189,232,.11), transparent 27%),
+    #0f1923;
+}
+
+body > :not(.app-hero):not(.detail-overlay) {
+  width: min(1440px, calc(100% - 48px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.app-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 46px max(24px, calc((100vw - 1440px) / 2));
+  border-bottom: 1px solid rgba(76, 99, 118, .55);
+  background:
+    linear-gradient(110deg, rgba(8,17,26,.98), rgba(15,30,42,.92)),
+    repeating-linear-gradient(135deg, transparent 0 34px, rgba(255,255,255,.018) 34px 35px);
+}
+
+.app-hero::before {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: -220px;
+  width: 520px;
+  height: 520px;
+  border: 1px solid rgba(255,70,85,.16);
+  transform: rotate(18deg);
+  pointer-events: none;
+}
+
+.app-hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 34%;
+  height: 3px;
+  background: linear-gradient(90deg, #ff4655, transparent);
+}
+
+.app-brand,
+.player-search-card,
+.search-message {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.app-brand {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.app-logo-mark {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  clip-path: polygon(12% 0, 100% 0, 76% 100%, 0 100%);
+  background: #ff4655;
+  color: white;
+  font-size: 29px;
+  font-weight: 1000;
+  font-style: italic;
+  box-shadow: 0 13px 30px rgba(255,70,85,.23);
+}
+
+.app-eyebrow {
+  margin-bottom: 5px;
+  color: #ff7d89;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+.app-brand h1 {
+  margin: 0;
+  color: #f4f8fb;
+  font-size: clamp(28px, 4vw, 46px);
+  letter-spacing: -.035em;
+}
+
+.app-brand p {
+  max-width: 680px;
+  margin: 10px 0 0;
+  color: #9fb0c2;
+  line-height: 1.7;
+}
+
+.player-search-card {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.25fr) minmax(120px, .65fr) minmax(190px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 30px;
+  padding: 15px;
+  border: 1px solid rgba(92, 118, 138, .65);
+  border-radius: 17px;
+  background: rgba(11, 24, 34, .78);
+  box-shadow: 0 20px 55px rgba(0,0,0,.3);
+  backdrop-filter: blur(18px);
+  animation: searchCardIn .55s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.search-field label {
+  display: block;
+  margin: 0 0 7px 3px;
+  color: #93a8ba;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  border: 1px solid #344a5b;
+  border-radius: 11px;
+  background: #0d1b26;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.search-input-wrap:focus-within {
+  border-color: #ff6472;
+  box-shadow: 0 0 0 4px rgba(255,70,85,.1);
+  transform: translateY(-1px);
+}
+
+.search-input-wrap input,
+.search-input-wrap select {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 14px 14px 43px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f2f7fa;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.search-input-wrap select {
+  padding-left: 14px;
+  cursor: pointer;
+}
+
+.search-input-icon,
+.search-input-prefix {
+  position: absolute;
+  left: 15px;
+  z-index: 1;
+  color: #ff6875;
+  font-size: 18px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.search-submit {
+  position: relative;
+  overflow: hidden;
+  min-width: 168px;
+  min-height: 50px;
+  margin: 0;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  border: 1px solid #ff6673;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #ff4655, #d93242);
+  box-shadow: 0 12px 28px rgba(255,70,85,.2);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.search-submit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.22), transparent 70%);
+  transform: translateX(-130%);
+  transition: transform .45s ease;
+}
+
+.search-submit:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(255,70,85,.32);
+}
+
+.search-submit:hover::before {
+  transform: translateX(130%);
+}
+
+.search-submit:active {
+  transform: translateY(0) scale(.98);
+}
+
+.search-submit.is-loading {
+  pointer-events: none;
+  color: transparent;
+}
+
+.search-submit.is-loading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 21px;
+  height: 21px;
+  margin: -11px 0 0 -11px;
+  border: 3px solid rgba(255,255,255,.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: searchSpin .75s linear infinite;
+}
+
+.search-submit-arrow {
+  font-size: 20px;
+  transition: transform .18s ease;
+}
+
+.search-submit:hover .search-submit-arrow {
+  transform: translateX(4px);
+}
+
+.search-message {
+  min-height: 24px;
+  margin-top: 10px;
+}
+
+.summary-cards,
+.analysis-box,
+.table-wrap,
+.graph-section {
+  animation: contentReveal .45s ease both;
+}
+
+@keyframes searchCardIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes contentReveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes searchSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .player-search-card {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mode-field,
+  .search-submit {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  body > :not(.app-hero):not(.detail-overlay) {
+    width: min(100% - 24px, 1440px);
+  }
+
+  .app-hero {
+    padding: 28px 16px 32px;
+  }
+
+  .app-brand {
+    grid-template-columns: 48px minmax(0,1fr);
+    gap: 12px;
+  }
+
+  .app-logo-mark {
+    width: 46px;
+    height: 46px;
+    font-size: 23px;
+  }
+
+  .app-brand p {
+    font-size: 13px;
+  }
+
+  .player-search-card {
+    grid-template-columns: 1fr;
+    margin-top: 22px;
+    padding: 12px;
+  }
+}
+
+/* 公開前整理：重複情報は非表示 */
+.detail-section.is-secondary {
+  display: none;
+}
+
+
+.pre-search-intro{width:min(1180px,calc(100% - 48px));margin:42px auto 54px;animation:introIn .55s ease both}
+.pre-search-intro.is-hiding{animation:introOut .32s ease both;pointer-events:none}
+.pre-search-heading{max-width:760px;margin-bottom:22px}.pre-search-eyebrow{color:#ff6f7c;font-size:11px;font-weight:900;letter-spacing:.17em}
+.pre-search-heading h2{margin:8px 0 10px;font-size:clamp(24px,3.2vw,38px);letter-spacing:-.025em}
+.pre-search-heading p{margin:0;color:#9fb0c2;line-height:1.75}
+.feature-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.feature-card{position:relative;overflow:hidden;min-height:190px;padding:20px;border:1px solid #2f4354;border-radius:15px;background:linear-gradient(145deg,rgba(21,36,49,.96),rgba(12,25,35,.96));transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.feature-card:hover{transform:translateY(-5px);border-color:#536d80;box-shadow:0 18px 35px rgba(0,0,0,.2)}
+.feature-number{color:#ff6370;font-size:12px;font-weight:900;letter-spacing:.12em}.feature-card h3{margin:20px 0 9px;color:#f4f8fa;font-size:18px}.feature-card p{margin:0;color:#9badbc;font-size:13px;line-height:1.75}
+.results-area{width:min(1440px,calc(100% - 48px));margin:30px auto 50px}.results-area[hidden]{display:none}.results-area.is-visible{display:block;animation:resultsIn .48s cubic-bezier(.2,.8,.2,1) both}
+.search-message.success{color:#7cf0c4}.search-message.error{color:#ff9aa2}
+@keyframes introIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes introOut{to{opacity:0;transform:translateY(-12px)}}@keyframes resultsIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:980px){.feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.pre-search-intro,.results-area{width:calc(100% - 24px)}.feature-grid{grid-template-columns:1fr}.feature-card{min-height:0}}
+
+
+/* 公開前仕上げ：目的説明・段階ローディング・親切なエラー */
+.purpose-callout {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 70, 85, .28);
+  border-radius: 13px;
+  background: rgba(255, 70, 85, .06);
+}
+
+.purpose-callout strong {
+  color: #ff7d89;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.purpose-callout span {
+  color: #c3d0da;
+  line-height: 1.7;
+  font-size: 13px;
+}
+
+.search-status-card,
+.search-error-card,
+.search-success-card {
+  width: min(1180px, 100%);
+  margin: 12px auto 0;
+  padding: 13px 15px;
+  border-radius: 13px;
+  background: rgba(10, 23, 34, .8);
+  border: 1px solid #2f4354;
+}
+
+.search-status-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #eaf3f8;
+  font-weight: 800;
+}
+
+.search-status-spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, .22);
+  border-top-color: #ff6875;
+  border-radius: 50%;
+  animation: searchSpin .75s linear infinite;
+}
+
+.search-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.search-step {
+  position: relative;
+  padding: 8px 8px 8px 26px;
+  border: 1px solid #263d4f;
+  border-radius: 9px;
+  color: #7f94a6;
+  font-size: 11px;
+  line-height: 1.35;
+  background: #0b1924;
+}
+
+.search-step::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 12px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #41576a;
+}
+
+.search-step.active {
+  color: #ffffff;
+  border-color: rgba(255, 70, 85, .6);
+  background: rgba(255, 70, 85, .08);
+}
+
+.search-step.active::before {
+  background: #ff6875;
+  box-shadow: 0 0 12px rgba(255, 70, 85, .75);
+}
+
+.search-step.done {
+  color: #9edfc8;
+  border-color: rgba(54, 211, 153, .35);
+}
+
+.search-step.done::before {
+  background: #36d399;
+}
+
+.search-error-card {
+  border-color: rgba(255, 107, 107, .55);
+  background: rgba(42, 17, 22, .8);
+  color: #ffd5d8;
+}
+
+.search-error-title,
+.search-success-title {
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.search-error-card p,
+.search-success-card p {
+  margin: 0;
+  color: #d9e2ea;
+  line-height: 1.65;
+  font-size: 13px;
+}
+
+.search-error-card ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #ffc2c7;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.search-success-card {
+  border-color: rgba(54, 211, 153, .38);
+  background: rgba(13, 39, 32, .72);
+  color: #aef3d7;
+}
+
+@media (max-width: 820px) {
+  .search-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .purpose-callout {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 520px) {
+  .search-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* 修正：モード選択の文字色 */
+.search-input-wrap select {
+  color: #f2f7fa;
+  background: #0d1b26;
+  color-scheme: dark;
+}
+
+.search-input-wrap select option {
+  color: #f2f7fa;
+  background: #0d1b26;
+}
+
+/* 修正：グラフを高解像度で安定表示 */
+.graph-canvas-wrap {
+  min-height: 280px;
+}
+
+.graph-canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  image-rendering: auto;
+}
+
+
+/* 試合一覧カード */
+.match-list-section {
+  margin-top: 24px;
+}
+
+.match-list-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.match-list-head h2 {
+  margin: 0;
+  color: #f5f9fc;
+  font-size: 24px;
+  letter-spacing: -.02em;
+}
+
+.match-list-head p {
+  margin: 7px 0 0;
+  color: #9fb0c2;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.match-list-guide {
+  padding: 7px 10px;
+  border: 1px solid #33495a;
+  border-radius: 999px;
+  color: #8fa3b5;
+  background: #111d27;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.match-card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 14px;
+}
+
+.match-card-item {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #2f4052;
+  border-radius: 17px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255,70,85,.12), transparent 34%),
+    linear-gradient(145deg, #162331, #101c27);
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.match-card-item:hover {
+  transform: translateY(-4px);
+  border-color: #52687a;
+  box-shadow: 0 18px 34px rgba(0,0,0,.23);
+}
+
+.match-card-item:focus-visible {
+  outline: 2px solid #ff4655;
+  outline-offset: 3px;
+}
+
+.match-card-top {
+  display: grid;
+  grid-template-columns: 56px minmax(0,1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.match-card-agent {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border: 1px solid #344a5b;
+  border-radius: 14px;
+  background: #0b1823;
+}
+
+.match-card-main {
+  min-width: 0;
+}
+
+.match-card-map {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #f4f8fb;
+  font-size: 21px;
+  font-weight: 900;
+}
+
+.match-card-map span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-card-mode {
+  margin-top: 4px;
+  color: #8fa3b5;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.match-result-badge {
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.match-result-badge.win {
+  color: #7cf0c4;
+  border: 1px solid rgba(54,211,153,.5);
+  background: rgba(54,211,153,.1);
+}
+
+.match-result-badge.lose {
+  color: #ff9aa2;
+  border: 1px solid rgba(255,107,107,.5);
+  background: rgba(255,107,107,.1);
+}
+
+.match-card-score-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #263847;
+  border-radius: 12px;
+  background: rgba(9, 20, 30, .62);
+}
+
+.match-card-score-label {
+  color: #8fa3b5;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.match-card-score {
+  margin-top: 3px;
+  color: #f5f9fc;
+  font-size: 26px;
+  font-weight: 1000;
+}
+
+.match-card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 9px 10px;
+  border: 1px solid rgba(69,189,232,.45);
+  border-radius: 10px;
+  color: #9be5ff;
+  background: rgba(69,189,232,.08);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.match-card-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.match-card-stat {
+  min-width: 0;
+  padding: 10px 8px;
+  border: 1px solid #263847;
+  border-radius: 10px;
+  background: #0f1b26;
+  text-align: center;
+}
+
+.match-card-stat span {
+  display: block;
+  color: #8397aa;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.match-card-stat strong {
+  display: block;
+  margin-top: 5px;
+  color: #eaf3f8;
+  font-size: 17px;
+}
+
+.match-card-bottom {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.match-card-bottom .list-rating-cell {
+  min-width: 0;
+}
+
+.match-card-bottom .list-rating-card {
+  min-width: 0;
+  grid-template-columns: 44px 54px minmax(0,1fr);
+}
+
+.match-card-bottom .list-highlight {
+  max-width: none;
+}
+
+.match-card-agent-name {
+  color: #9fb0c2;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .match-list-head {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .match-card-list {
+    grid-template-columns: 1fr;
+  }
+
+  .match-card-top {
+    grid-template-columns: 48px minmax(0,1fr);
+  }
+
+  .match-card-agent {
+    width: 48px;
+    height: 48px;
+  }
+
+  .match-result-badge {
+    grid-column: 1 / -1;
+    width: fit-content;
+  }
+
+  .match-card-score-row,
+  .match-card-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .match-card-action {
+    width: 100%;
+  }
+
+  .match-card-agent-name {
+    text-align: left;
+  }
+}
+
+@media (max-width: 460px) {
+  .match-card-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+.match-card-score-note {
+  margin-top: 3px;
+  color: #7f94a6;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+
+/* ランク表示 */
+.rank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 9px;
+  border: 1px solid #395165;
+  border-radius: 999px;
+  background: rgba(12, 27, 39, .82);
+  color: #d8e6ef;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.rank-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #91a8ba;
+  box-shadow: 0 0 10px rgba(145,168,186,.4);
+}
+
+.rank-pill.rank-iron::before { background:#8f8f8f; }
+.rank-pill.rank-bronze::before { background:#c08255; }
+.rank-pill.rank-silver::before { background:#c8d0d6; }
+.rank-pill.rank-gold::before { background:#f3c64e; }
+.rank-pill.rank-platinum::before { background:#55d6c2; }
+.rank-pill.rank-diamond::before { background:#bf9cff; }
+.rank-pill.rank-ascendant::before { background:#6fe38f; }
+.rank-pill.rank-immortal::before { background:#f05b86; }
+.rank-pill.rank-radiant::before { background:#f7e08a; }
+
+.match-card-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  margin-top: 7px;
+}
+
+.match-card-mode {
+  margin-top: 0;
+}
+
+.detail-rank-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0 10px;
+}
+
+.player-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 84px;
+  color: #9fb0c2;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+/* 修正：試合内プレイヤー欄の数字・名前・ランクが重ならないように調整 */
+.player-row {
+  grid-template-columns: 34px minmax(120px, 1fr) minmax(92px, auto) minmax(92px, auto) !important;
+}
+
+.player-name {
+  min-width: 0;
+}
+
+.player-stats {
+  justify-self: end;
+}
+
+.player-rank {
+  justify-self: end;
+  min-width: 92px;
+  text-align: right;
+}
+
+/* 平均ランク表示 */
+.average-rank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 9px;
+  border: 1px solid rgba(247, 201, 72, .42);
+  border-radius: 999px;
+  background: rgba(247, 201, 72, .08);
+  color: #ffe29a;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.average-rank-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f7c948;
+  box-shadow: 0 0 10px rgba(247,201,72,.6);
+}
+
+.match-card-meta-row .average-rank-pill {
+  margin-left: 0;
+}
+
+.detail-rank-row .average-rank-pill {
+  margin-left: 0;
+}
+
+@media (max-width: 720px) {
+  .player-row {
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+  }
+
+  .player-stats,
+  .player-rank {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .player-rank {
+    min-width: 0;
+    text-align: left;
+  }
+}
+
+
+/* 表示切替・取得試合数 */
+.limit-field {
+  min-width: 132px;
+}
+
+.match-list-controls {
+  display: inline-flex;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid #2f4052;
+  border-radius: 999px;
+  background: #0f1b26;
+}
+
+.view-toggle {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 13px;
+  background: transparent;
+  color: #8fa3b5;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.view-toggle.active {
+  background: #ff4655;
+  color: #ffffff;
+}
+
+.match-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #2f4052;
+  border-radius: 15px;
+  background: #111d27;
+}
+
+.match-table {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+}
+
+.match-table th,
+.match-table td {
+  padding: 11px 10px;
+  border-bottom: 1px solid #263847;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.match-table th {
+  color: #9fb0c2;
+  background: #162331;
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+
+.match-table tr {
+  cursor: pointer;
+  transition: background .14s ease;
+}
+
+.match-table tbody tr:hover {
+  background: rgba(255,70,85,.08);
+}
+
+.match-table tbody tr:focus-visible {
+  outline: 2px solid #ff4655;
+  outline-offset: -2px;
+}
+
+.table-agent-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-agent-cell img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #0b1823;
+}
+
+.table-result {
+  font-weight: 900;
+}
+
+.table-result.win {
+  color: #7cf0c4;
+}
+
+.table-result.lose {
+  color: #ff9aa2;
+}
+
+.table-rank-small {
+  color: #d8e6ef;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.table-score-note {
+  display: block;
+  color: #7f94a6;
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+@media (max-width: 720px) {
+  .match-list-controls {
+    width: 100%;
+  }
+
+  .view-toggle {
+    flex: 1;
+  }
+}
+
+
+/* 最終修正：試合内プレイヤー欄の番号・名前・成績・ランクのズレ防止 */
+.player-row {
+  grid-template-columns: 28px 34px minmax(0, 1fr) minmax(86px, auto) minmax(78px, auto) !important;
+  align-items: center;
+  column-gap: 9px;
+}
+
+.player-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #22303d;
+  color: #9fb0c2;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.player-row.me .player-order {
+  background: rgba(255, 70, 85, .22);
+  color: #ffb3ba;
+}
+
+.player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-stats {
+  justify-self: end;
+  min-width: 86px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.player-rank-label {
+  justify-self: end;
+  min-width: 78px;
+  color: #9fb0c2;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.player-row-empty {
+  grid-template-columns: 1fr !important;
+  color: #9fb0c2;
+}
+
+@media (max-width: 760px) {
+  .player-row {
+    grid-template-columns: 28px 34px minmax(0, 1fr) !important;
+    row-gap: 4px;
+  }
+
+  .player-stats,
+  .player-rank-label {
+    grid-column: 3;
+    justify-self: start;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .player-rank-label {
+    color: #8397aa;
+  }
+}
+
+
+.search-form {
+  grid-template-columns: minmax(180px, 1.2fr) minmax(110px, .7fr) minmax(150px, .8fr) minmax(130px, .7fr) auto;
+}
+
+@media (max-width: 980px) {
+  .search-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .search-submit {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .search-form {
+    grid-template-columns: 1fr;
+  }
+
+  .search-submit {
+    grid-column: auto;
+  }
+}
+
+
+/* 最終修正：hiddenをCSSのdisplay指定より優先 */
+.match-card-list[hidden],
+.match-table-wrap[hidden],
+.match-pagination[hidden],
+.load-more-area[hidden] {
+  display: none !important;
+}
+
+/* ページ切り替え */
+.match-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #263847;
+  border-radius: 14px;
+  background: #101c27;
+}
+
+.pagination-status {
+  width: 100%;
+  text-align: center;
+  color: #9fb0c2;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.pagination-button {
+  min-width: 38px;
+  height: 36px;
+  border: 1px solid #34495a;
+  border-radius: 10px;
+  background: #162331;
+  color: #d8e6ef;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.pagination-button:hover:not(:disabled) {
+  border-color: #ff4655;
+  color: #ffffff;
+}
+
+.pagination-button.active {
+  border-color: #ff4655;
+  background: #ff4655;
+  color: #ffffff;
+}
+
+.pagination-button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+
+/* 追加読み込み */
+.load-more-area[hidden] {
+  display: none !important;
+}
+
+.load-more-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #263847;
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(18, 33, 46, .92), rgba(10, 21, 32, .92));
+}
+
+.load-more-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.load-more-copy strong {
+  color: #f2f7fa;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.load-more-copy span {
+  color: #9fb0c2;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.load-more-button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 999px;
+  background: #ff4655;
+  color: #ffffff;
+  padding: 11px 15px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(255,70,85,.2);
+  transition: transform .16s ease, filter .16s ease, opacity .16s ease;
+}
+
+.load-more-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.load-more-button:disabled {
+  opacity: .58;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (max-width: 700px) {
+  .load-more-area {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .load-more-button {
+    width: 100%;
+  }
+}
+
+/* 表示切替を確実にボタンらしく */
+.match-list-controls {
+  flex-shrink: 0;
+}
+
+.view-toggle {
+  appearance: none;
+}
+
+/* 試合内プレイヤー欄の最終レイアウト */
+.player-row {
+  grid-template-columns: 28px 34px minmax(0, 1fr) minmax(86px, auto) minmax(78px, auto) !important;
+  align-items: center;
+  column-gap: 9px;
+}
+
+.player-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #22303d;
+  color: #9fb0c2;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.player-row.me .player-order {
+  background: rgba(255, 70, 85, .22);
+  color: #ffb3ba;
+}
+
+.player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-stats {
+  justify-self: end;
+  min-width: 86px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.player-rank-label {
+  justify-self: end;
+  min-width: 78px;
+  color: #9fb0c2;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.player-row-empty {
+  grid-template-columns: 1fr !important;
+  color: #9fb0c2;
+}
+
+@media (max-width: 760px) {
+  .player-row {
+    grid-template-columns: 28px 34px minmax(0, 1fr) !important;
+    row-gap: 4px;
+  }
+
+  .player-stats,
+  .player-rank-label {
+    grid-column: 3;
+    justify-self: start;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .player-rank-label {
+    color: #8397aa;
+  }
+}
+
+
+/* 公開運用版：API制限時・長めの取得時の見え方 */
+.search-status-card {
+  box-shadow: 0 14px 32px rgba(0,0,0,.16);
+}
+
+.rating-error {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  color: #ff9aa2;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+/* 公開用フッター・利用規約・プライバシー */
+.site-footer {
+  width: min(1180px, calc(100% - 28px));
+  margin: 34px auto 26px;
+  border: 1px solid #263847;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(18, 33, 46, .92), rgba(10, 21, 32, .92));
+  color: #d7e5ef;
+}
+
+.footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 18px;
+}
+
+.footer-title {
+  color: #f2f7fa;
+  font-size: 14px;
+  font-weight: 900;
+  margin-bottom: 7px;
+}
+
+.footer-main p {
+  margin: 0;
+  color: #9fb0c2;
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.footer-link-button {
+  border: 1px solid #33495a;
+  border-radius: 999px;
+  background: #0f1b26;
+  color: #d8e6ef;
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.footer-link-button:hover {
+  transform: translateY(-1px);
+  border-color: #ff4655;
+  color: #ffffff;
+}
+
+.legal-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+}
+
+.legal-modal.open {
+  display: block;
+}
+
+.legal-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .66);
+  backdrop-filter: blur(4px);
+}
+
+.legal-dialog {
+  position: relative;
+  width: min(820px, calc(100% - 28px));
+  max-height: min(86vh, 760px);
+  margin: 7vh auto 0;
+  overflow: hidden;
+  border: 1px solid #34495a;
+  border-radius: 20px;
+  background: #101c27;
+  color: #e8f1f7;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, .52);
+}
+
+.legal-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 18px;
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid #263847;
+}
+
+.legal-eyebrow {
+  color: #ff7d89;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.legal-dialog h2 {
+  margin: 5px 0 0;
+  font-size: 24px;
+}
+
+.legal-close {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #34495a;
+  border-radius: 12px;
+  background: #162331;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.legal-tabs {
+  display: flex;
+  gap: 7px;
+  padding: 12px 22px;
+  border-bottom: 1px solid #263847;
+  overflow-x: auto;
+}
+
+.legal-tab {
+  border: 1px solid #33495a;
+  border-radius: 999px;
+  background: #0f1b26;
+  color: #9fb0c2;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.legal-tab.active {
+  border-color: #ff4655;
+  background: #ff4655;
+  color: #ffffff;
+}
+
+.legal-content {
+  max-height: calc(min(86vh, 760px) - 142px);
+  overflow-y: auto;
+  padding: 20px 22px 24px;
+}
+
+.legal-panel {
+  display: none;
+}
+
+.legal-panel.active {
+  display: block;
+}
+
+.legal-panel h3 {
+  margin: 0 0 6px;
+  color: #f5f9fc;
+  font-size: 22px;
+}
+
+.legal-updated {
+  margin: 0 0 18px;
+  color: #8397aa;
+  font-size: 12px;
+}
+
+.legal-panel h4 {
+  margin: 18px 0 7px;
+  color: #ffb3ba;
+  font-size: 14px;
+}
+
+.legal-panel p,
+.legal-panel li {
+  color: #c4d3dd;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.legal-panel ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.about-grid {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.about-item {
+  display: grid;
+  gap: 5px;
+  padding: 13px;
+  border: 1px solid #263847;
+  border-radius: 13px;
+  background: #0d1822;
+}
+
+.about-item strong {
+  color: #f2f7fa;
+  font-size: 13px;
+}
+
+.about-item span,
+.legal-note {
+  color: #9fb0c2;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+body.legal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .footer-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-actions {
+    justify-content: flex-start;
+  }
+
+  .legal-dialog {
+    margin-top: 4vh;
+    max-height: 92vh;
+  }
+
+  .legal-content {
+    max-height: calc(92vh - 142px);
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+
+<header class="app-hero">
+  <div class="app-brand">
+    <div class="app-logo-mark" aria-hidden="true">RC</div>
+    <div>
+      <div class="app-eyebrow">ROUNDCOACH | POST-MATCH PERFORMANCE ANALYSIS</div>
+      <h1>RoundCoach</h1>
+      <p>VALORANTの試合後データから、見直すべきラウンドと次に意識するポイントを見つけます。</p>
+    </div>
+  </div>
+
+  <form id="playerSearchForm" class="player-search-card">
+    <div class="search-field">
+      <label for="name">プレイヤー名</label>
+      <div class="search-input-wrap">
+        <span class="search-input-icon" aria-hidden="true">⌁</span>
+        <input id="name" value="" autocomplete="off" placeholder="プレイヤー名">
+      </div>
+    </div>
+
+    <div class="search-field tag-field">
+      <label for="tag">タグ</label>
+      <div class="search-input-wrap">
+        <span class="search-input-prefix">#</span>
+        <input id="tag" value="" autocomplete="off" placeholder="TAG">
+      </div>
+    </div>
+
+    <div class="search-field mode-field">
+      <label for="mode">モード</label>
+      <div class="search-input-wrap">
+        <select id="mode">
+          <option value="Competitive">コンペティティブ</option>
+          <option value="Unrated">アンレート</option>
+        </select>
+      </div>
+    </div>
+
+
+    <button id="searchButton" class="search-submit" type="submit">
+      <span class="search-submit-label">試合を分析</span>
+      <span class="search-submit-arrow" aria-hidden="true">→</span>
+    </button>
+  </form>
+
+  <div id="message" class="search-message" role="status" aria-live="polite"></div>
+</header>
+
+<section id="preSearchIntro" class="pre-search-intro">
+  <div class="pre-search-heading">
+    <div class="pre-search-eyebrow">WHAT YOU CAN REVIEW</div>
+    <h2>試合後のデータを、次の改善につなげる</h2>
+    <p>直近の試合を読み込み、全体評価から優先して見直したいラウンド、キル位置まで順番に振り返れます。</p>
+    <div class="purpose-callout">
+      <strong>このアプリの目的</strong>
+      <span>既存の戦績サイトは結果の確認が中心ですが、RoundCoachでは重要なラウンドを自動で絞り込み、次の試合で意識する改善点まで表示します。</span>
+    </div>
+  </div>
+  <div class="feature-grid">
+    <article class="feature-card"><div class="feature-number">01</div><h3>試合全体を評価</h3><p>KD、ACS、HS率、攻守別成績をまとめ、試合全体の内容を確認できます。</p></article>
+    <article class="feature-card"><div class="feature-number">02</div><h3>優先して見直したいラウンドを抽出</h3><p>ファーストデスや装備有利での敗北など、優先して見直したいラウンドを自動で絞り込みます。</p></article>
+    <article class="feature-card"><div class="feature-number">03</div><h3>キル位置を確認</h3><p>誰がどこから誰を倒したかをマップ上で確認し、交戦位置を振り返れます。</p></article>
+    <article class="feature-card"><div class="feature-number">04</div><h3>次の試合へつなげる</h3><p>良かった点と見直したい点を整理し、次に意識する内容を明確にします。</p></article>
+  </div>
+</section>
+
+
+<main id="resultsArea" class="results-area" hidden>
+<div id="summaryCards" class="summary-cards"></div>
+
+<div id="analysisBox" class="analysis-box" style="display:none;">
+  <h2>試合全体の振り返り</h2>
+  <div id="analysisComments"></div>
+</div>
+
+<section class="match-list-section">
+  <div class="match-list-head">
+    <div>
+      <h2>直近の試合</h2>
+      <p>まず20試合を表示します。必要な場合だけ20試合ずつ追加で読み込めます。</p>
+    </div>
+    <div class="match-list-controls" aria-label="表示切替">
+      <button type="button" class="view-toggle active" data-view="card">カード</button>
+      <button type="button" class="view-toggle" data-view="table">表</button>
+    </div>
+  </div>
+
+  <div id="rows" class="match-card-list"></div>
+
+  <div id="matchTableWrap" class="match-table-wrap" hidden>
+    <table class="match-table">
+      <thead>
+        <tr>
+          <th>評価</th>
+          <th>結果</th>
+          <th>スコア</th>
+          <th>マップ</th>
+          <th>エージェント</th>
+          <th>ランク</th>
+          <th>平均ランク</th>
+          <th>K/D</th>
+          <th>KD</th>
+          <th>ACS</th>
+          <th>HS%</th>
+        </tr>
+      </thead>
+      <tbody id="tableRows"></tbody>
+    </table>
+  </div>
+
+  <div id="matchPagination" class="match-pagination" hidden></div>
+
+  <div id="loadMoreArea" class="load-more-area" hidden>
+    <div class="load-more-copy">
+      <strong id="loadMoreTitle">さらに過去の試合を読み込めます</strong>
+      <span id="loadMoreDescription">読み込みを安定させるため、20試合ずつ追加します。</span>
+    </div>
+    <button id="loadMoreButton" class="load-more-button" type="button">さらに20試合読み込む</button>
+  </div>
+</section>
+
+<div class="graph-section">
+  <div class="graph-card">
+    <h2>マップ別KD</h2>
+    <div class="graph-canvas-wrap">
+      <canvas id="graph"></canvas>
+    </div>
+    <div id="mapKDSummary" class="kd-summary"></div>
+    <div id="mapKDList" class="kd-number-list"></div>
+  </div>
+
+  <div class="graph-card">
+    <h2>エージェント別KD</h2>
+    <div class="graph-canvas-wrap">
+      <canvas id="agentGraph"></canvas>
+    </div>
+    <div id="agentKDSummary" class="kd-summary"></div>
+    <div id="agentKDList" class="kd-number-list"></div>
+  </div>
+</div>
+
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-title">RoundCoachは非公式の試合後分析ツールです</div>
+      <p>
+        このサービスはRiot Games公式のサービスではありません。
+        VALORANTおよび関連する名称・画像・データはRiot Gamesに帰属します。
+        本サービスは試合後の振り返りを目的とした非公式ツールです。
+      </p>
+    </div>
+
+    <div class="footer-actions" aria-label="サービス情報">
+      <button type="button" class="footer-link-button" data-legal-open="terms">利用規約</button>
+      <button type="button" class="footer-link-button" data-legal-open="privacy">プライバシーポリシー</button>
+      <button type="button" class="footer-link-button" data-legal-open="about">このサービスについて</button>
+    </div>
+  </div>
+</footer>
+
+<div id="legalModal" class="legal-modal" aria-hidden="true">
+  <div class="legal-modal-backdrop" data-legal-close></div>
+  <section class="legal-dialog" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle">
+    <div class="legal-dialog-header">
+      <div>
+        <div class="legal-eyebrow">SERVICE INFORMATION</div>
+        <h2 id="legalModalTitle">サービス情報</h2>
+      </div>
+      <button type="button" class="legal-close" data-legal-close aria-label="閉じる">×</button>
+    </div>
+
+    <div class="legal-tabs" role="tablist" aria-label="サービス情報の切り替え">
+      <button type="button" class="legal-tab active" data-legal-tab="terms">利用規約</button>
+      <button type="button" class="legal-tab" data-legal-tab="privacy">プライバシー</button>
+      <button type="button" class="legal-tab" data-legal-tab="about">概要</button>
+    </div>
+
+    <div class="legal-content">
+      <article class="legal-panel active" data-legal-panel="terms">
+        <h3>利用規約</h3>
+        <p class="legal-updated">最終更新：2026年8月11日</p>
+
+        <h4>1. サービスの目的</h4>
+        <p>
+          本サービス（RoundCoach）は、VALORANTの試合後データをもとに、成績の確認、重要ラウンドの振り返り、
+          次の試合に向けた改善点の整理を行うための非公式ツールです。
+        </p>
+
+        <h4>2. 非公式サービスについて</h4>
+        <p>
+          RoundCoachはRiot Games公式のサービスではありません。
+          Riot Games、VALORANT、その他関連する名称、画像、データの権利は各権利者に帰属します。
+        </p>
+
+        <h4>3. 禁止事項</h4>
+        <ul>
+          <li>試合中のリアルタイムな不正な補助、チート、規約違反行為のために利用すること</li>
+          <li>過度な連続検索や自動アクセスなど、サービスや外部APIに負荷をかける行為</li>
+          <li>他人になりすます行為、嫌がらせ、迷惑行為、第三者の権利を侵害する行為</li>
+        </ul>
+
+        <h4>4. データの正確性</h4>
+        <p>
+          表示される分析結果は、取得できた試合データをもとにした参考情報です。
+          データ取得の失敗、遅延、表示の誤差が発生する場合があります。
+        </p>
+
+        <h4>5. サービスの変更・停止</h4>
+        <p>
+          外部APIの制限、仕様変更、メンテナンスなどにより、予告なく機能の変更や停止を行う場合があります。
+        </p>
+      </article>
+
+      <article class="legal-panel" data-legal-panel="privacy">
+        <h3>プライバシーポリシー</h3>
+        <p class="legal-updated">最終更新：2026年8月11日</p>
+
+        <h4>1. 取得する情報</h4>
+        <p>
+          RoundCoachでは、ユーザーが入力したRiot ID、タグ、モード、読み込み件数を使って、
+          試合後分析に必要なデータを取得します。
+        </p>
+
+        <h4>2. 取得しない情報</h4>
+        <p>
+          Riotアカウントのパスワード、ログイン情報、認証コード、支払い情報は取得しません。
+        </p>
+
+        <h4>3. 利用目的</h4>
+        <p>
+          入力された情報と取得した試合データは、試合一覧の表示、成績分析、ラウンド分析、
+          キル位置の可視化、サービスの安定化のために使用します。
+        </p>
+
+        <h4>4. 一時保存について</h4>
+        <p>
+          同じ検索や同じ試合詳細をすばやく表示するため、取得した試合データや分析結果を
+          サーバー側で一定時間保存する場合があります。
+        </p>
+
+        <h4>5. 第三者提供について</h4>
+        <p>
+          取得した情報を広告目的で販売することはありません。
+          ただし、試合データ取得のために外部APIへ必要なリクエストを送信します。
+        </p>
+
+        <h4>6. 注意事項</h4>
+        <p>
+          他人のRiot IDを検索できる場合があります。表示された情報を、嫌がらせや迷惑行為のために使用しないでください。
+        </p>
+      </article>
+
+      <article class="legal-panel" data-legal-panel="about">
+        <h3>このサービスについて</h3>
+        <p>
+          RoundCoachは、戦績を見るだけで終わらせず、試合後に「どのラウンドを見直すべきか」
+          「次の試合で何を意識するべきか」を整理することを目的に制作しています。
+        </p>
+
+        <div class="about-grid">
+          <div class="about-item">
+            <strong>主な機能</strong>
+            <span>直近試合の分析、軽量評価、重要ラウンド抽出、キル位置確認</span>
+          </div>
+          <div class="about-item">
+            <strong>利用場面</strong>
+            <span>試合後の反省、個人練習、改善点の整理</span>
+          </div>
+          <div class="about-item">
+            <strong>現在の状態</strong>
+            <span>公開テスト準備中。エラーや表示崩れが起きる場合があります。</span>
+          </div>
+        </div>
+
+        <p class="legal-note">
+          お問い合わせ先やSNSリンクは、公開時にここへ追加してください。
+        </p>
+      </article>
+    </div>
+  </section>
+</div>
+
+<div id="detailOverlay" class="detail-overlay" aria-hidden="true">
+  <aside class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="detail-header">
+      <h2 id="detailTitle">試合詳細</h2>
+      <button id="detailClose" class="detail-close" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div id="detailContent" class="detail-content"></div>
+  </aside>
+</div>
+
+<script>
+
+let lastFocusedMatchRow = null;
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function closeMatchDetail() {
+  const overlay = document.getElementById("detailOverlay");
+  overlay.classList.remove("open");
+  overlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("panel-open");
+
+  if (lastFocusedMatchRow) {
+    lastFocusedMatchRow.focus();
+  }
+}
+
+async function openMatchDetail(matchId, rowElement) {
+  if (!matchId) {
+    alert("この試合のIDを取得できませんでした。");
+    return;
+  }
+
+  lastFocusedMatchRow = rowElement || null;
+
+  const overlay = document.getElementById("detailOverlay");
+  const content = document.getElementById("detailContent");
+
+  overlay.classList.add("open");
+  overlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("panel-open");
+  content.innerHTML = `<div class="detail-loading">試合詳細を読み込んでいます...</div>`;
+
+  try {
+    const detailParams = new URLSearchParams({ action: "match", matchId });
+    if (currentSearchParams?.name) detailParams.set("name", currentSearchParams.name);
+    if (currentSearchParams?.tag) detailParams.set("tag", currentSearchParams.tag);
+    const response = await fetch(`api.php?${detailParams.toString()}`);
+    const detail = await response.json();
+
+    if (!response.ok) {
+      throw new Error(detail.message || detail.error || "試合詳細の取得に失敗しました。");
+    }
+
+    renderMatchDetail(detail);
+  } catch (error) {
+    console.error(error);
+    content.innerHTML = `
+      <div class="detail-error">
+        ${escapeHtml(error.message || "試合詳細の取得に失敗しました。")}
+      </div>
+    `;
+  }
+}
+
+function formatJapaneseDate(value) {
+  if (!value) return "日時不明";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(date);
+}
+
+function translateMode(mode) {
+  const labels = {
+    competitive: "コンペティティブ",
+    unrated: "アンレート",
+    deathmatch: "射撃練習",
+    swiftplay: "スイフトプレイ",
+    spikerush: "スパイクラッシュ",
+    "spike rush": "スパイクラッシュ",
+    escalation: "エスカレーション",
+    replication: "レプリケーション",
+    custom: "カスタム"
+  };
+
+  const key = String(mode || "").toLowerCase();
+  return labels[key] || mode || "不明";
+}
+
+function sideLabel(side) {
+  return side === "attack" ? "アタッカー側" : "ディフェンダー側";
+}
+
+
+function renderBulletItems(items) {
+  return (items || []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
+}
+
+function renderStars(value) {
+  const rounded = Math.round(Number(value || 0));
+  return "★".repeat(Math.max(0, Math.min(5, rounded))) + "☆".repeat(Math.max(0, 5 - rounded));
+}
+
+function sideStatCard(label, data) {
+  const total = Number(data?.total || 0);
+  const wins = Number(data?.wins || 0);
+  const rate = total ? Math.round(wins / total * 100) : 0;
+  return `
+    <div class="side-card">
+      <div style="color:#9fb0c2;margin-bottom:6px;">${escapeHtml(label)}</div>
+      <strong>${wins}勝 ${Number(data?.losses || 0)}敗</strong>
+      <div style="margin-top:8px;">勝率 ${rate}% / K-D ${Number(data?.kills || 0)}-${Number(data?.deaths || 0)}</div>
+      <div style="color:#9fb0c2;margin-top:4px;">与ダメージ ${Number(data?.damage || 0)}</div>
+    </div>`;
+}
+
+
+
+function importantRoundTypeLabel(type) {
+  const labels = {
+    warning: "要確認",
+    highlight: "好プレー",
+    good: "良かったラウンド",
+    notice: "注目ラウンド"
+  };
+  return labels[type] || "注目ラウンド";
+}
+
+function getRoundFocusEvent(detail, roundNumber, preferredType = "auto") {
+  const events = (detail?.killMapEvents || [])
+    .filter(event => Number(event.round) === Number(roundNumber))
+    .sort((a, b) => Number(a.timeMs || 0) - Number(b.timeMs || 0));
+
+  if (!events.length) return "";
+
+  const round = (detail?.rounds || []).find(
+    item => Number(item.number) === Number(roundNumber)
+  );
+
+  if (preferredType === "my-death" || round?.firstDeath) {
+    const myDeath = events.find(event => event?.victim?.isMe);
+    if (myDeath) return myDeath.id;
+  }
+
+  if (preferredType === "my-kill" || round?.firstKill) {
+    const myKill = events.find(event => event?.killer?.isMe);
+    if (myKill) return myKill.id;
+  }
+
+  if (preferredType === "warning") {
+    const myDeath = events.find(event => event?.victim?.isMe);
+    if (myDeath) return myDeath.id;
+  }
+
+  if (preferredType === "highlight" || preferredType === "good") {
+    const myKill = events.find(event => event?.killer?.isMe);
+    if (myKill) return myKill.id;
+  }
+
+  return events[0]?.id || "";
+}
+
+function buildRoundAnalysisUrl(detail, roundNumber, preferredType = "auto") {
+  const params = new URLSearchParams({
+    matchId: String(detail?.matchId || ""),
+    round: String(Number(roundNumber || 1)),
+    name: String(detail?.player?.name || ""),
+    tag: String(detail?.player?.tag || "")
+  });
+
+  const eventId = getRoundFocusEvent(detail, roundNumber, preferredType);
+  if (eventId) params.set("event", eventId);
+
+  return `round-analysis.html?${params.toString()}`;
+}
+
+function renderImportantRounds(rounds, detail) {
+  if (!Array.isArray(rounds) || !rounds.length) {
+    return `<div class="detail-analysis-placeholder">特に優先して確認するラウンドはありませんでした。</div>`;
+  }
+
+  return rounds.map(round => {
+    const preferredType =
+      round.type === "warning"
+        ? "warning"
+        : round.type === "highlight" || round.type === "good"
+          ? "my-kill"
+          : "auto";
+
+    const url = buildRoundAnalysisUrl(detail, round.number, preferredType);
+
+    return `
+      <article class="important-round-card important-${escapeHtml(round.type)}">
+        <div class="important-round-head">
+          <div>
+            <span class="important-round-badge">${escapeHtml(importantRoundTypeLabel(round.type))}</span>
+            <strong>R${Number(round.number)}</strong>
+          </div>
+          <span class="${round.won ? "win" : "lose"}">${round.won ? "勝利" : "敗北"}</span>
+        </div>
+
+        <div class="important-round-stats">
+          <span>K/D ${Number(round.kills)}/${Number(round.deaths)}</span>
+          <span>${Number(round.damage)}ダメージ</span>
+          <span>装備差 ${Number(round.loadoutDifference) >= 0 ? "+" : ""}${Number(round.loadoutDifference).toLocaleString()}</span>
+        </div>
+
+        <ul class="important-round-reasons">
+          ${(round.reasons || []).map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}
+        </ul>
+
+        <div class="important-round-footer">
+          <a
+            class="round-review-link ${round.type === "warning" ? "warning" : ""}"
+            href="${escapeHtml(url)}"
+          >
+            このラウンドを確認 →
+          </a>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderBestRound(round, detail) {
+  if (!round) {
+    return `<div class="detail-analysis-placeholder">ベストラウンドを判定できませんでした。</div>`;
+  }
+
+  const url = buildRoundAnalysisUrl(detail, round.number, "my-kill");
+
+  return `
+    <div class="best-round-card">
+      <div>
+        <div class="best-round-eyebrow">BEST ROUND</div>
+        <div class="best-round-number">R${Number(round.number)}</div>
+      </div>
+
+      <div class="best-round-data">
+        <strong>${round.won ? "勝利" : "敗北"}・${escapeHtml(sideLabel(round.side))}</strong>
+        <div>${Number(round.kills || 0)}キル / ${Number(round.damage || 0)}ダメージ</div>
+        <div>装備差：${Number(round.loadoutDifference || 0) >= 0 ? "+" : ""}${Number(round.loadoutDifference || 0).toLocaleString()}</div>
+
+        <div class="best-round-footer">
+          <a class="round-review-link" href="${escapeHtml(url)}">
+            ベストラウンドを確認 →
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function mapWorldToPercent(location, mapData) {
+  if (!location || !mapData) return null;
+
+  const x = Number(location.x || 0);
+  const y = Number(location.y || 0);
+  const left = y * Number(mapData.xMultiplier || 0) + Number(mapData.xScalarToAdd || 0);
+  const top = x * Number(mapData.yMultiplier || 0) + Number(mapData.yScalarToAdd || 0);
+
+  if (![left, top].every(Number.isFinite)) return null;
+  return {
+    left: Math.max(0, Math.min(1, left)) * 100,
+    top: Math.max(0, Math.min(1, top)) * 100
+  };
+}
+
+function formatRoundTime(milliseconds) {
+  const seconds = Math.max(0, Math.floor(Number(milliseconds || 0) / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function killEventType(event) {
+  if (event?.killer?.isMe) return "my-kill";
+  if (event?.victim?.isMe) return "my-death";
+  return "other-kill";
+}
+
+function renderKillMapShell(detail) {
+  const events = Array.isArray(detail.killMapEvents) ? detail.killMapEvents : [];
+  const rounds = [...new Set(events.map(event => Number(event.round)))].sort((a, b) => a - b);
+
+  if (!detail.mapData?.image) {
+    return `<div class="detail-analysis-placeholder">この試合のマップ画像を取得できませんでした。</div>`;
+  }
+
+  return `
+    ${rounds.length ? `
+      <div class="kill-map-toolbar">
+        <label>
+          表示ラウンド：
+          <select id="killMapRoundSelect" class="kill-map-select">
+            ${rounds.map(round => `<option value="${round}">R${round}</option>`).join("")}
+          </select>
+        </label>
+        <span class="detail-analysis-placeholder">点や線にカーソルを合わせると詳細を確認できます。</span>
+      </div>
+    ` : `
+      <div class="detail-analysis-placeholder" style="margin-bottom:12px;">
+        マップ画像のみ表示しています。キル位置データは取得できませんでした。
+      </div>
+    `}
+
+    <div class="kill-map-stage">
+      <img class="kill-map-image" src="${escapeHtml(detail.mapData.image)}" alt="${escapeHtml(detail.map || "マップ")}のミニマップ">
+      <svg id="killMapSvg" class="kill-map-svg" viewBox="0 0 100 100" aria-label="キル位置マップ"></svg>
+      <div id="killMapMarkerLayer" class="kill-map-marker-layer" aria-label="エージェント位置"></div>
+    </div>
+
+    <div class="kill-map-legend">
+      <span><i class="kill-map-dot mine"></i>あなたが倒した</span>
+      <span><i class="kill-map-dot death"></i>あなたが倒された</span>
+      <span><i class="kill-map-dot other"></i>ほかのプレイヤー同士</span>
+    </div>
+    <div id="killMapEventList" class="kill-map-event-list"></div>
+  `;
+}
+
+function getMapTeamClass(player, detail) {
+  if (!player) return "enemy";
+  if (player.isMe) return "ally me";
+  return String(player.team || "").toLowerCase() === String(detail.playerTeam || "").toLowerCase()
+    ? "ally"
+    : "enemy";
+}
+
+function renderMapAgentMarker(player, position, detail, index, role) {
+  if (!player || !position) return "";
+
+  const teamClass = getMapTeamClass(player, detail);
+  const roleLabel = role === "killer" ? "倒したプレイヤー" : "倒されたプレイヤー";
+  const title = `${index + 1}. ${roleLabel}：${player.name || "不明"}（${player.agent || "不明"}）`;
+  const image = player.agentIcon
+    ? `<img class="kill-map-agent-image" src="${escapeHtml(player.agentIcon)}" alt="${escapeHtml(player.agent || "エージェント")}">`
+    : `<span class="kill-map-agent-fallback">${escapeHtml(String(player.agent || "?").slice(0, 1))}</span>`;
+
+  return `
+    <div class="kill-map-agent-marker ${teamClass} ${role}"
+         style="left:${position.left}%;top:${position.top}%;"
+         title="${escapeHtml(title)}">
+      <span class="kill-map-agent-frame">${image}</span>
+      <span class="kill-map-order-badge">${index + 1}</span>
+    </div>`;
+}
+
+function renderEventAgent(player, detail) {
+  const teamClass = getMapTeamClass(player, detail);
+  return `
+    <div class="kill-map-event-agent ${teamClass}" title="${escapeHtml(player?.agent || "不明")}">
+      ${player?.agentIcon ? `<img src="${escapeHtml(player.agentIcon)}" alt="${escapeHtml(player.agent || "エージェント")}">` : ""}
+    </div>`;
+}
+
+function updateKillMap(detail, roundNumber) {
+  const svg = document.getElementById("killMapSvg");
+  const markerLayer = document.getElementById("killMapMarkerLayer");
+  const list = document.getElementById("killMapEventList");
+  if (!svg || !markerLayer || !list) return;
+
+  const events = (detail.killMapEvents || [])
+    .filter(event => Number(event.round) === Number(roundNumber))
+    .sort((a,b) => Number(a.timeMs || 0) - Number(b.timeMs || 0));
+
+  const drawableEvents = events.map((event,index) => ({
+    event,index,
+    killerPosition:mapWorldToPercent(event.killerLocation,detail.mapData),
+    victimPosition:mapWorldToPercent(event.victimLocation,detail.mapData)
+  })).filter(item => item.killerPosition && item.victimPosition);
+
+  const arrowDefs = `
+    <defs>
+      <marker id="arrow-my-kill" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+        <path d="M0,0 L5,2.5 L0,5 Z" fill="#36d399"></path>
+      </marker>
+      <marker id="arrow-my-death" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+        <path d="M0,0 L5,2.5 L0,5 Z" fill="#ff6b6b"></path>
+      </marker>
+      <marker id="arrow-other-kill" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+        <path d="M0,0 L5,2.5 L0,5 Z" fill="#9aa9b7"></path>
+      </marker>
+    </defs>`;
+
+  svg.innerHTML = arrowDefs + drawableEvents.map(({event,killerPosition,victimPosition}) => {
+    const type = killEventType(event);
+    return `<line class="kill-map-line ${type}"
+      x1="${killerPosition.left}" y1="${killerPosition.top}"
+      x2="${victimPosition.left}" y2="${victimPosition.top}"
+      marker-end="url(#arrow-${type})"></line>`;
+  }).join("");
+
+  markerLayer.innerHTML = drawableEvents.map(({event,index,killerPosition,victimPosition}) => `
+    ${renderMapAgentMarker(event.killer,killerPosition,detail,index,"killer")}
+    ${renderMapAgentMarker(event.victim,victimPosition,detail,index,"victim")}
+  `).join("");
+
+  list.innerHTML = events.length ? events.map((event,index) => `
+    <div class="kill-map-event">
+      <span class="kill-map-event-number">${index + 1}</span>
+      ${renderEventAgent(event.killer,detail)}
+      <div class="kill-map-event-main">
+        <div class="kill-map-event-title">${index+1}. ${escapeHtml(event.killer.name)} <span class="kill-map-event-arrow">→</span> ${escapeHtml(event.victim.name)}</div>
+        <div class="kill-map-event-meta">${escapeHtml(formatRoundTime(event.timeMs))}・${escapeHtml(event.killer.agent || "不明")} → ${escapeHtml(event.victim.agent || "不明")}・${escapeHtml(event.weapon)}</div>
+      </div>
+      ${renderEventAgent(event.victim,detail)}
+    </div>`).join("") : `<div class="detail-analysis-placeholder">このラウンドにはキルデータがありません。</div>`;
+}
+
+function setupKillMap(detail) {
+  const select = document.getElementById("killMapRoundSelect");
+  if (!select) return;
+  const render = () => updateKillMap(detail, Number(select.value));
+  select.addEventListener("change", render);
+  render();
+}
+
+function renderMatchDetail(detail) {
+  const content = document.getElementById("detailContent");
+  const me = detail.player || {};
+  const teams = detail.teams || { red: [], blue: [], ally: [], enemy: [] };
+  const rounds = Array.isArray(detail.rounds) ? detail.rounds : [];
+  const allyPlayers = teams.ally || (detail.playerTeam === "red" ? teams.red : teams.blue) || [];
+  const enemyPlayers = teams.enemy || (detail.playerTeam === "red" ? teams.blue : teams.red) || [];
+
+  const fallbackMyScore = detail.playerTeam === "red"
+    ? Number(detail.redScore || 0)
+    : Number(detail.blueScore || 0);
+  const fallbackEnemyScore = detail.playerTeam === "red"
+    ? Number(detail.blueScore || 0)
+    : Number(detail.redScore || 0);
+  const myTeamScore = detail.myTeamScore ?? fallbackMyScore;
+  const enemyTeamScore = detail.enemyTeamScore ?? fallbackEnemyScore;
+
+  const renderTeam = (title, score, players, teamClass) => {
+    const sortedPlayers = [...(players || [])].sort(
+      (a, b) =>
+        Number(b.acs || 0) - Number(a.acs || 0) ||
+        Number(b.kills || 0) - Number(a.kills || 0) ||
+        Number(a.deaths || 0) - Number(b.deaths || 0)
+    );
+
+    return `
+      <div class="team-card ${teamClass}">
+        <div class="team-title">${escapeHtml(title)} <span class="team-score">${Number(score || 0)}</span></div>
+        ${sortedPlayers.map((player, index) => `
+          <div class="player-row ${player.isMe ? "me" : ""}">
+            <span class="player-order">${index + 1}</span>
+            ${player.agentIcon
+              ? `<img class="player-agent" src="${escapeHtml(player.agentIcon)}" alt="${escapeHtml(player.agent)}">`
+              : `<div class="player-agent"></div>`}
+            <div class="player-name">
+              ${escapeHtml(player.name)}#${escapeHtml(player.tag)}
+              <div style="color:#9fb0c2;font-size:12px;">${escapeHtml(player.agent)}</div>
+            </div>
+            <div class="player-stats">
+              ${Number(player.kills || 0)}/${Number(player.deaths || 0)}/${Number(player.assists || 0)}
+              <span class="player-acs">ACS ${Number(player.acs || 0)}</span>
+            </div>
+            <div class="player-rank-label">${escapeHtml(normalizeRankName(player.rank))}</div>
+          </div>
+        `).join("") || `<div class="player-row player-row-empty">プレイヤーデータなし</div>`}
+      </div>
+    `;
+  };
+
+function getRoundReasonInfo(endType) {
+  const type = String(endType || "").toLowerCase();
+
+  if (type.includes("elimination")) {
+    return {
+      label: "殲滅",
+      icon: "assets/icons/elimination.svg"
+    };
+  }
+
+  if (type.includes("defuse")) {
+    return {
+      label: "スパイク解除",
+      icon: "assets/icons/defuse.svg"
+    };
+  }
+
+  if (
+    type.includes("deton") ||
+    type.includes("explode") ||
+    type.includes("bomb")
+  ) {
+    return {
+      label: "スパイク爆発",
+      icon: "assets/icons/detonate.svg"
+    };
+  }
+
+  if (
+    type.includes("time") ||
+    type.includes("timer")
+  ) {
+    return {
+      label: "時間切れ",
+      icon: "assets/icons/timeout.svg"
+    };
+  }
+
+  return {
+    label: endType || "終了理由不明",
+    icon: ""
+  };
+}
+
+ const renderRoundItems = roundItems => `
+  <div class="round-list">
+    ${roundItems.map(round => {
+      const reason = getRoundReasonInfo(round.endType);
+      const allyLoadout = Number(round.allyLoadoutValue || 0);
+      const enemyLoadout = Number(round.enemyLoadoutValue || 0);
+      const maxLoadout = Math.max(allyLoadout, enemyLoadout, 1);
+      const allyWidth = Math.round(allyLoadout / maxLoadout * 100);
+      const enemyWidth = Math.round(enemyLoadout / maxLoadout * 100);
+      const difference = Number(round.loadoutDifference || 0);
+      const loadoutText = difference >= 3000
+        ? "装備有利"
+        : difference <= -3000
+          ? "装備不利"
+          : "装備互角";
+
+      return `
+        <div
+          class="round-item ${round.won ? "win-round" : "lose-round"}"
+         title="R${round.number}・${round.won ? "勝利" : "敗北"}・${escapeHtml(reason.label)}
+味方装備額：${Number(round.allyLoadoutValue || 0).toLocaleString()}クレジット
+敵装備額：${Number(round.enemyLoadoutValue || 0).toLocaleString()}クレジット
+装備差：${Number(round.loadoutDifference || 0) >= 0 ? "+" : ""}${Number(round.loadoutDifference || 0).toLocaleString()}クレジット"
+        >
+          ${reason.icon
+            ? `<img class="round-reason-icon" src="${escapeHtml(reason.icon)}" alt="${escapeHtml(reason.label)}">`
+            : `<span class="round-reason-icon round-reason-unknown" aria-label="終了理由不明">?</span>`
+          }
+
+          <span class="round-number">R${round.number}</span>
+          <span class="round-result">${round.won ? "勝" : "敗"}</span>
+
+          <div class="round-loadout-chart" aria-label="味方装備額${allyLoadout}、敵装備額${enemyLoadout}">
+            <div class="round-loadout-row">
+              <span class="round-loadout-label ally-label">味</span>
+              <div class="round-loadout-track">
+                <span class="round-loadout-bar ally-bar" style="width:${allyWidth}%"></span>
+              </div>
+            </div>
+            <div class="round-loadout-row">
+              <span class="round-loadout-label enemy-label">敵</span>
+              <div class="round-loadout-track">
+                <span class="round-loadout-bar enemy-bar" style="width:${enemyWidth}%"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("")}
+  </div>
+`;
+
+let roundsHtml = `
+  <div class="detail-analysis-placeholder">
+    ラウンド情報は取得できませんでした。
+  </div>
+`;
+
+if (rounds.length) {
+  const firstHalf = rounds.filter(
+    round => round.number <= 12
+  );
+
+  const secondHalf = rounds.filter(
+    round =>
+      round.number >= 13 &&
+      round.number <= 24
+  );
+
+  const overtime = rounds.filter(
+    round => round.number >= 25
+  );
+
+  const firstSide =
+    firstHalf[0]?.side || "defense";
+
+  const secondSide =
+    secondHalf[0]?.side ||
+    (firstSide === "attack"
+      ? "defense"
+      : "attack");
+
+  roundsHtml = `
+    <div class="round-groups">
+      <div class="round-half">
+        <div class="round-half-title">
+          <span class="round-half-label">
+            前半（R1〜R12）
+          </span>
+
+          <span class="side-badge ${firstSide}">
+            ${sideLabel(firstSide)}
+          </span>
+        </div>
+
+        ${renderRoundItems(firstHalf)}
+      </div>
+
+      ${
+        secondHalf.length
+          ? `
+            <div class="round-half">
+              <div class="round-half-title">
+                <span class="round-half-label">
+                  後半（R13〜R24）
+                </span>
+
+                <span class="side-badge ${secondSide}">
+                  ${sideLabel(secondSide)}
+                </span>
+              </div>
+
+              ${renderRoundItems(secondHalf)}
+            </div>
+          `
+          : ""
+      }
+
+      ${
+        overtime.length
+          ? `
+            <div class="round-half">
+              <div class="round-half-title">
+                <span class="round-half-label">
+                  延長
+                </span>
+
+                <span class="side-badge">
+                  1ラウンドごとに攻守交代
+                </span>
+              </div>
+
+              ${renderRoundItems(overtime)}
+            </div>
+          `
+          : ""
+      }
+    </div>
+  `;
+} 
+
+content.innerHTML = `
+    <section class="detail-hero">
+      ${me.agentIcon
+        ? `<img class="detail-agent-icon" src="${escapeHtml(me.agentIcon)}" alt="${escapeHtml(me.agent)}">`
+        : `<div class="detail-agent-icon"></div>`}
+      <div>
+        <h3 class="detail-map">${escapeHtml(detail.map || "不明")}</h3>
+        <div class="detail-subtitle">
+          ${escapeHtml(translateMode(detail.mode))}<br>
+          <span class="detail-date">${escapeHtml(formatJapaneseDate(detail.startedAt))}</span>
+        </div>
+        <div class="detail-result ${detail.win ? "win" : "lose"}">
+          <span>${detail.win ? "勝利" : "敗北"}</span>
+          <span>${escapeHtml(detail.score || "0 - 0")}</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="detail-grid">
+      <div class="detail-stat">
+        <div class="detail-stat-label">K / D / A</div>
+        <div class="detail-stat-value">${Number(me.kills || 0)} / ${Number(me.deaths || 0)} / ${Number(me.assists || 0)}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">KD</div>
+        <div class="detail-stat-value">${Number(me.kd || 0).toFixed(2)}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">ACS</div>
+        <div class="detail-stat-value">${Number(me.acs || 0)}</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">HS率</div>
+        <div class="detail-stat-value">${Number(me.hs || 0).toFixed(1)}%</div>
+      </div>
+    </div>
+
+    <section class="detail-section">
+      <h3>試合後分析レポート</h3>
+      <div class="analysis-top-card">
+        <div class="analysis-eyebrow">MATCH PERFORMANCE REPORT</div>
+        <div class="analysis-score-row">
+          <div class="analysis-score-circle">
+            <div class="analysis-score-number">${Number(detail.analysis?.score || 0)}</div>
+            <div class="analysis-score-label">100点満点</div>
+          </div>
+          <div>
+            <div class="analysis-grade-line">総合評価 ${escapeHtml(detail.analysis?.grade || "-")}</div>
+            <div class="analysis-stars">${renderStars(detail.analysis?.stars)}</div>
+            <div style="line-height:1.8;color:#dbe4eb;">${escapeHtml(detail.analysis?.summary || "分析データがありません。")}</div>
+            <div class="analysis-priority">次に確認すること：${escapeHtml((detail.analysis?.improvements || [])[0] || "ラウンド別データを確認して課題を絞り込みましょう。")}</div>
+          </div>
+        </div>
+
+        <div class="analysis-metrics">
+          <div class="analysis-metric">
+            <div class="analysis-metric-label">KD</div>
+            <div class="analysis-metric-value">${Number(me.kd || 0).toFixed(2)}</div>
+            <div class="analysis-metric-note">K ${Number(me.kills || 0)} / D ${Number(me.deaths || 0)}</div>
+          </div>
+          <div class="analysis-metric">
+            <div class="analysis-metric-label">ACS</div>
+            <div class="analysis-metric-value">${Number(me.acs || 0)}</div>
+            <div class="analysis-metric-note">味方平均 ${Number(detail.analysis?.teamAcs || 0)}</div>
+          </div>
+          <div class="analysis-metric">
+            <div class="analysis-metric-label">攻撃勝率</div>
+            <div class="analysis-metric-value">${detail.sideStats?.attack?.total ? Math.round(detail.sideStats.attack.wins / detail.sideStats.attack.total * 100) : 0}%</div>
+            <div class="analysis-metric-note">${Number(detail.sideStats?.attack?.wins || 0)}勝 ${Number(detail.sideStats?.attack?.losses || 0)}敗</div>
+          </div>
+          <div class="analysis-metric">
+            <div class="analysis-metric-label">防衛勝率</div>
+            <div class="analysis-metric-value">${detail.sideStats?.defense?.total ? Math.round(detail.sideStats.defense.wins / detail.sideStats.defense.total * 100) : 0}%</div>
+            <div class="analysis-metric-note">${Number(detail.sideStats?.defense?.wins || 0)}勝 ${Number(detail.sideStats?.defense?.losses || 0)}敗</div>
+          </div>
+        </div>
+
+        <div class="analysis-columns">
+          <div class="analysis-mini good">
+            <h4 style="color:#7cf0c4;">良かった点</h4>
+            <ul>${renderBulletItems(detail.analysis?.strengths)}</ul>
+          </div>
+          <div class="analysis-mini bad">
+            <h4 style="color:#ff9aa2;">見直したい点</h4>
+            <ul>${renderBulletItems(detail.analysis?.improvements)}</ul>
+          </div>
+        </div>
+        <div class="analysis-data-note">この評価は、KD、ACS、HS率、味方平均との差、攻守別勝率、ファーストキルとファーストデスをもとに算出しています。取得した試合データに基づく独自評価です。</div>
+      </div>
+    </section>
+
+
+
+    <section class="detail-section">
+      <h3>最も内容が良かったラウンド</h3>
+      ${renderBestRound(detail.bestRound, detail)}
+    </section>
+
+    <section class="detail-section">
+      <h3>改善点があるラウンド</h3>
+      <div class="important-round-list">
+        ${renderImportantRounds(detail.importantRounds, detail)}
+      </div>
+    </section>
+
+    <section class="detail-section">
+      <h3>次の試合で意識したいこと</h3>
+      <div class="next-action-list">
+        ${(detail.nextMatchActions || []).length
+          ? detail.nextMatchActions.map((action, index) => `
+              <div class="next-action-card">
+                <span class="next-action-number">${index + 1}</span>
+                <span>${escapeHtml(action)}</span>
+              </div>
+            `).join("")
+          : `<div class="detail-analysis-placeholder">改善アドバイスを作成できませんでした。</div>`}
+      </div>
+    </section>
+
+    <section class="detail-section">
+      <h3>試合内のプレイヤー</h3>
+      <div class="team-columns">
+        ${renderTeam("自分のチーム", myTeamScore, allyPlayers, "ally-team")}
+        ${renderTeam("相手チーム", enemyTeamScore, enemyPlayers, "enemy-team")}
+      </div>
+    </section>
+
+
+    <section class="detail-section">
+      <h3>攻撃側・防衛側の比較</h3>
+      <div class="side-analysis-grid">
+        ${sideStatCard("アタッカー側", detail.sideStats?.attack)}
+        ${sideStatCard("ディフェンダー側", detail.sideStats?.defense)}
+      </div>
+    </section>
+  `;
+
+  setupKillMap(detail);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const overlay = document.getElementById("detailOverlay");
+  const closeButton = document.getElementById("detailClose");
+
+  closeButton.addEventListener("click", closeMatchDetail);
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) closeMatchDetail();
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && overlay.classList.contains("open")) {
+      closeMatchDetail();
+    }
+  });
+});
+
+
+const AGENT_ROLES = {
+  Astra: "controller",
+  Breach: "initiator",
+  Brimstone: "controller",
+  Chamber: "sentinel",
+  Clove: "controller",
+  Cypher: "sentinel",
+  Deadlock: "sentinel",
+  Fade: "initiator",
+  Gekko: "initiator",
+  Harbor: "controller",
+  Iso: "duelist",
+  Jett: "duelist",
+  "KAY/O": "initiator",
+  Killjoy: "sentinel",
+  Miks: "controller",
+  Neon: "duelist",
+  Omen: "controller",
+  Phoenix: "duelist",
+  Raze: "duelist",
+  Reyna: "duelist",
+  Sage: "sentinel",
+  Skye: "initiator",
+  Sova: "initiator",
+  Tejo: "initiator",
+  Veto: "sentinel",
+  Viper: "controller",
+  Vyse: "sentinel",
+  Waylay: "duelist",
+  Yoru: "duelist"
+};
+
+const ROLE_INFO = {
+  duelist: {
+    label: "デュエリスト",
+    description: "先頭で交戦し、キルやスペース獲得を担当するロール"
+  },
+  initiator: {
+    label: "イニシエーター",
+    description: "索敵や妨害で味方の交戦を支援するロール"
+  },
+  controller: {
+    label: "コントローラー",
+    description: "スモークなどで視界とエリアを管理するロール"
+  },
+  sentinel: {
+    label: "センチネル",
+    description: "守備、監視、味方の支援を担当するロール"
+  },
+  mixed: {
+    label: "複数ロール",
+    description: "複数の役割を使い分けているプレイスタイル"
+  },
+  unknown: {
+    label: "判定不能",
+    description: "ロールを判定できないエージェントが含まれています"
+  }
+};
+
+function normalizeAgentName(agentName) {
+  return String(agentName || "").trim();
+}
+
+function getAgentRole(agentName) {
+  return AGENT_ROLES[normalizeAgentName(agentName)] || "unknown";
+}
+
+function getRoleProfile(data) {
+  const counts = {
+    duelist: 0,
+    initiator: 0,
+    controller: 0,
+    sentinel: 0,
+    unknown: 0
+  };
+
+  data.forEach(match => {
+    counts[getAgentRole(match.agent)]++;
+  });
+
+  const knownRoles = ["duelist", "initiator", "controller", "sentinel"];
+  const sortedRoles = knownRoles
+    .map(role => ({ role, count: counts[role] }))
+    .sort((a, b) => b.count - a.count);
+
+  const topRole = sortedRoles[0];
+  const knownMatchCount = knownRoles.reduce(
+    (sum, role) => sum + counts[role],
+    0
+  );
+
+  if (!topRole || knownMatchCount === 0) {
+    return {
+      dominantRole: "unknown",
+      dominantShare: 0,
+      counts,
+      knownMatchCount
+    };
+  }
+
+  const dominantShare = topRole.count / knownMatchCount * 100;
+
+  return {
+    dominantRole: dominantShare >= 50 ? topRole.role : "mixed",
+    mostUsedRole: topRole.role,
+    dominantShare,
+    counts,
+    knownMatchCount
+  };
+}
+
+
+let loadingStageTimer = null;
+let currentLoadingStage = 0;
+
+let loadingSteps = [
+  "試合データを取得中",
+  "試合一覧を整理中",
+  "表示ページを準備中",
+  "結果画面を準備中"
+];
+
+function setLoadingStepsForLimit(matchLimit) {
+  const limit = Number(matchLimit || 20);
+  loadingSteps = [
+    `${limit}試合分の履歴を確認中`,
+    "試合履歴を順番に読み込み中",
+    "試合一覧を整理中",
+    "結果画面を準備中"
+  ];
+}
+
+function renderLoadingSteps(activeIndex) {
+  return `<div class="search-status-card">
+    <div class="search-status-head">
+      <span class="search-status-spinner" aria-hidden="true"></span>
+      <span>${loadingSteps[Math.min(activeIndex, loadingSteps.length - 1)]}...</span>
+    </div>
+    <div class="search-steps">
+      ${loadingSteps.map((step, index) => {
+        const state = index < activeIndex ? "done" : index === activeIndex ? "active" : "";
+        return `<div class="search-step ${state}">${escapeHtml(step)}</div>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+
+function startLoadingSteps(matchLimit) {
+  setLoadingStepsForLimit(matchLimit);
+  const message = document.getElementById("message");
+  if (!message) return;
+
+  stopLoadingSteps(false);
+  currentLoadingStage = 0;
+  message.classList.remove("success", "error");
+  message.innerHTML = renderLoadingSteps(currentLoadingStage);
+
+  loadingStageTimer = window.setInterval(() => {
+    currentLoadingStage = Math.min(currentLoadingStage + 1, loadingSteps.length - 1);
+    message.innerHTML = renderLoadingSteps(currentLoadingStage);
+
+    if (currentLoadingStage >= loadingSteps.length - 1) {
+      stopLoadingSteps(false);
+    }
+  }, 850);
+}
+
+function stopLoadingSteps() {
+  if (loadingStageTimer) {
+    clearInterval(loadingStageTimer);
+    loadingStageTimer = null;
+  }
+}
+
+function setSearchError(title, description, checks = []) {
+  stopLoadingSteps();
+  const message = document.getElementById("message");
+  if (!message) return;
+
+  message.classList.remove("success");
+  message.classList.add("error");
+  message.innerHTML = `<div class="search-error-card">
+    <div class="search-error-title">${escapeHtml(title)}</div>
+    <p>${escapeHtml(description)}</p>
+    ${checks.length ? `<ul>${checks.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+  </div>`;
+}
+
+function setSearchSuccess(matchCount) {
+  stopLoadingSteps();
+  const message = document.getElementById("message");
+  if (!message) return;
+
+  message.classList.remove("error");
+  message.classList.add("success");
+  message.innerHTML = `<div class="search-success-card">
+    <div class="search-success-title">分析が完了しました。</div>
+    <p>${Number(matchCount || 0)}試合を読み込みました。試合詳細は、選んだ試合だけ取得します。</p>
+  </div>`;
+}
+
+function clearCurrentResults() {
+  const rows = document.getElementById("rows");
+  const tableRows = document.getElementById("tableRows");
+  const summaryCards = document.getElementById("summaryCards");
+  const analysisBox = document.getElementById("analysisBox");
+  const mapGraph = document.getElementById("mapKDGraph");
+  const agentGraph = document.getElementById("agentKDGraph");
+  const mapList = document.getElementById("mapKDList");
+  const agentList = document.getElementById("agentKDList");
+  const pagination = document.getElementById("matchPagination");
+
+  if (rows) rows.innerHTML = "";
+  if (tableRows) tableRows.innerHTML = "";
+  if (summaryCards) summaryCards.innerHTML = "";
+  if (analysisBox) analysisBox.style.display = "none";
+  if (mapGraph) mapGraph.innerHTML = "";
+  if (agentGraph) agentGraph.innerHTML = "";
+  if (mapList) mapList.innerHTML = "";
+  if (agentList) agentList.innerHTML = "";
+  if (pagination) {
+    pagination.innerHTML = "";
+    pagination.hidden = true;
+  }
+
+  const loadMoreArea = document.getElementById("loadMoreArea");
+  if (loadMoreArea) loadMoreArea.hidden = true;
+}
+
+
+const INITIAL_MATCH_LIMIT = 20;
+const MATCH_LOAD_STEP = 20;
+const MAX_MATCH_LIMIT = 60;
+let currentRequestedLimit = INITIAL_MATCH_LIMIT;
+let currentSearchParams = null;
+
+function parseMatchPayload(payload) {
+  return Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.data)
+      ? payload.data
+      : Array.isArray(payload?.matches)
+        ? payload.matches
+        : [];
+}
+
+function buildMatchesUrl({ name, tag, mode }, size) {
+  const params = new URLSearchParams({
+    action: "matches",
+    name,
+    tag,
+    mode,
+    size: String(size)
+  });
+  return `api.php?${params.toString()}`;
+}
+
+function handleMatchFetchError(res, payload) {
+  if (res.status === 429 || res.status === 503 || payload?.code === "API_RATE_LIMIT" || payload?.code === "LOCAL_RATE_LIMIT" || payload?.code === "QUEUE_FULL") {
+    const retryAfter = Number(payload?.retryAfter || res.headers.get("Retry-After") || 0);
+    const title = payload?.code === "LOCAL_RATE_LIMIT"
+      ? "検索が集中しています。"
+      : payload?.code === "QUEUE_FULL" || res.status === 503
+        ? "現在、順番待ちが多くなっています。"
+        : "現在、試合データを取得しにくい状態です。";
+
+    setSearchError(
+      title,
+      retryAfter > 0
+        ? `${retryAfter}秒ほど待ってから、もう一度試してください。`
+        : "少し時間を置いてから、もう一度試してください。",
+      [
+        "まずは20試合の表示で確認してください。",
+        "追加読み込みは、必要なときだけ押してください。"
+      ]
+    );
+    return true;
+  }
+
+  setSearchError(
+    "試合データを取得できませんでした。",
+    payload?.message || "入力内容や対象モードを確認してから、もう一度試してください。",
+    [
+      "プレイヤー名とタグが正しいか確認してください。",
+      "直近に選択したモードの試合がない場合は表示されません。"
+    ]
+  );
+  return true;
+}
+
+function renderLoadedMatches(data, { focusNewPage = false, previousCount = 0 } = {}) {
+  window.lastMatchData = Array.isArray(data) ? data : [];
+
+  if (focusNewPage && previousCount > 0) {
+    currentMatchPage = Math.floor(previousCount / MATCHES_PER_PAGE) + 1;
+  } else {
+    currentMatchPage = 1;
+  }
+
+  renderCurrentMatchPage();
+  renderSummaryCards(window.lastMatchData);
+  renderAnalysisComments(window.lastMatchData);
+  showSearchResults();
+  updateLoadMoreArea();
+
+  requestAnimationFrame(() => {
+    drawGraph(window.lastMatchData);
+    drawAgentGraph(window.lastMatchData);
+  });
+}
+
+function updateLoadMoreArea() {
+  const area = document.getElementById("loadMoreArea");
+  const button = document.getElementById("loadMoreButton");
+  const description = document.getElementById("loadMoreDescription");
+  const title = document.getElementById("loadMoreTitle");
+  const data = Array.isArray(window.lastMatchData) ? window.lastMatchData : [];
+
+  if (!area || !button) return;
+
+  const canLoadMore = Boolean(currentSearchParams)
+    && currentRequestedLimit < MAX_MATCH_LIMIT
+    && data.length >= currentRequestedLimit;
+
+  area.hidden = !canLoadMore;
+  if (!canLoadMore) return;
+
+  const nextLimit = Math.min(currentRequestedLimit + MATCH_LOAD_STEP, MAX_MATCH_LIMIT);
+  const addCount = nextLimit - currentRequestedLimit;
+
+  button.textContent = `さらに${addCount}試合読み込む`;
+  button.disabled = false;
+  if (title) title.textContent = "さらに過去の試合を読み込めます";
+  if (description) {
+    description.textContent = `${data.length}試合を表示中です。読み込みを安定させるため、必要な場合だけ追加してください。`;
+  }
+}
+
+function setLoadMoreLoading(isLoading) {
+  const button = document.getElementById("loadMoreButton");
+  if (!button) return;
+  button.disabled = isLoading;
+  button.textContent = isLoading ? "追加読み込み中..." : button.textContent;
+  button.setAttribute("aria-busy", String(isLoading));
+}
+
+async function load() {
+  const name = document.getElementById("name").value.trim();
+  const tag = document.getElementById("tag").value.trim();
+  const mode = document.getElementById("mode").value;
+  const rows = document.getElementById("rows");
+
+  resetSearchMessageState();
+  clearCurrentResults();
+  currentSearchParams = null;
+  currentRequestedLimit = INITIAL_MATCH_LIMIT;
+  if (rows) rows.innerHTML = "";
+
+  if (!name || !tag) {
+    setSearchError(
+      "プレイヤー名とタグを入力してください。",
+      "Riot IDの名前とタグを分けて入力すると、試合データを検索できます。",
+      ["例：プレイヤー名 roboa、タグ RGS", "タグの先頭に # は付けなくても大丈夫です。"]
+    );
+    return;
+  }
+
+  currentSearchParams = { name, tag, mode };
+  startLoadingSteps(INITIAL_MATCH_LIMIT);
+
+  try {
+    const res = await fetch(buildMatchesUrl(currentSearchParams, INITIAL_MATCH_LIMIT));
+    const payload = await res.json().catch(() => null);
+    const data = parseMatchPayload(payload);
+
+    if (!res.ok) {
+      handleMatchFetchError(res, payload);
+      return;
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      setSearchError(
+        "対象モードの試合が見つかりませんでした。",
+        "選択したモードの試合が直近にない可能性があります。",
+        [
+          "コンペティティブかアンレートを切り替えて確認してください。",
+          "Riot IDの大文字・小文字やタグを確認してください。"
+        ]
+      );
+      return;
+    }
+
+    renderLoadedMatches(data);
+    setSearchSuccess(data.length);
+  } catch (err) {
+    console.error(err);
+    setSearchError(
+      "通信エラーが発生しました。",
+      "時間を置いてもう一度試してください。",
+      [
+        "ページを更新して、もう一度試してください。",
+        "何度も失敗する場合は、しばらく時間を置いてください。"
+      ]
+    );
+  }
+}
+
+async function loadMoreMatches() {
+  if (!currentSearchParams) return;
+
+  const previousCount = Array.isArray(window.lastMatchData) ? window.lastMatchData.length : 0;
+  const nextLimit = Math.min(currentRequestedLimit + MATCH_LOAD_STEP, MAX_MATCH_LIMIT);
+  if (nextLimit <= currentRequestedLimit) return;
+
+  resetSearchMessageState();
+  setLoadMoreLoading(true);
+
+  try {
+    const res = await fetch(buildMatchesUrl(currentSearchParams, nextLimit));
+    const payload = await res.json().catch(() => null);
+    const data = parseMatchPayload(payload);
+
+    if (!res.ok) {
+      handleMatchFetchError(res, payload);
+      return;
+    }
+
+    currentRequestedLimit = nextLimit;
+    renderLoadedMatches(data, { focusNewPage: true, previousCount });
+    setSearchSuccess(data.length);
+  } catch (err) {
+    console.error(err);
+    setSearchError(
+      "追加読み込みに失敗しました。",
+      "少し時間を置いてから、もう一度試してください。",
+      ["表示済みの試合はそのまま確認できます。", "連続で押さず、数秒待ってから試してください。"]
+    );
+  } finally {
+    setLoadMoreLoading(false);
+    updateLoadMoreArea();
+  }
+}
+
+function listGradeClass(grade) {
+  return `grade-${String(grade || "d").toLowerCase()}`;
+}
+
+function renderListRating(rating) {
+  const score = Number(rating?.score || 0);
+  const grade = escapeHtml(rating?.grade || "-");
+  return `
+    <div class="list-rating-card">
+      <div class="list-grade ${listGradeClass(rating?.grade)}">${grade}</div>
+      <div>
+        <div class="list-score">${score}<small>点</small></div>
+        <div class="list-stars">${escapeHtml(renderStars(rating?.stars))}</div>
+      </div>
+      <div class="list-highlight" title="${escapeHtml(rating?.highlight || "")}">${escapeHtml(rating?.highlight || "")}</div>
+    </div>`;
+}
+
+function normalizeRankName(rank) {
+  const value = String(rank || "").trim();
+  if (!value || value === "不明" || value === "ランク不明") return "ランク不明";
+  return value;
+}
+
+function rankClassName(rank) {
+  const lower = String(rank || "").toLowerCase();
+  if (lower.includes("iron")) return "rank-iron";
+  if (lower.includes("bronze")) return "rank-bronze";
+  if (lower.includes("silver")) return "rank-silver";
+  if (lower.includes("gold")) return "rank-gold";
+  if (lower.includes("platinum")) return "rank-platinum";
+  if (lower.includes("diamond")) return "rank-diamond";
+  if (lower.includes("ascendant")) return "rank-ascendant";
+  if (lower.includes("immortal")) return "rank-immortal";
+  if (lower.includes("radiant")) return "rank-radiant";
+  return "rank-unknown";
+}
+
+function renderRankPill(rank) {
+  const rankName = normalizeRankName(rank);
+  return `<span class="rank-pill ${rankClassName(rankName)}">${escapeHtml(rankName)}</span>`;
+}
+
+
+function renderAverageRankPill(match) {
+  const rank = normalizeRankName(match?.averageRank);
+  const count = Number(match?.rankedPlayerCount || 0);
+  const label = count > 0 ? `平均 ${rank}` : "平均ランク不明";
+  const title = count > 0 ? `ランク情報が取得できた${count}人の平均ランク` : "平均ランクを取得できませんでした";
+  return `<span class="average-rank-pill" title="${escapeHtml(title)}">${escapeHtml(label)}</span>`;
+}
+
+function getPlayerSideScore(match) {
+  const myTeamScore = Number(match?.myTeamScore);
+  const enemyTeamScore = Number(match?.enemyTeamScore);
+
+  if (Number.isFinite(myTeamScore) && Number.isFinite(enemyTeamScore)) {
+    return {
+      text: `${myTeamScore} - ${enemyTeamScore}`,
+      note: "自分側 - 相手側"
+    };
+  }
+
+  const rawScore = String(match?.score || "").trim();
+  const scoreMatch = rawScore.match(/(\d+)\s*[-:]\s*(\d+)/);
+
+  if (!scoreMatch) {
+    return {
+      text: rawScore || "-",
+      note: "自分側 - 相手側"
+    };
+  }
+
+  let left = Number(scoreMatch[1]);
+  let right = Number(scoreMatch[2]);
+
+  // サーバーから来る score が Red - Blue の順番の場合、
+  // win と点数の大小が合わない試合だけ、自分側 - 相手側になるように反転する。
+  if (match?.win && left < right) {
+    [left, right] = [right, left];
+  } else if (!match?.win && left > right) {
+    [left, right] = [right, left];
+  }
+
+  return {
+    text: `${left} - ${right}`,
+    note: "自分側 - 相手側"
+  };
+}
+
+
+
+
+const MATCHES_PER_PAGE = 10;
+let currentMatchPage = 1;
+const matchRatingHtmlCache = new Map();
+
+function initMatchViewToggle() {
+  document.querySelectorAll(".view-toggle").forEach(button => {
+    button.addEventListener("click", () => {
+      setMatchView(button.dataset.view);
+    });
+  });
+
+  const pagination = document.getElementById("matchPagination");
+  if (pagination) {
+    pagination.addEventListener("click", event => {
+      const button = event.target.closest("[data-page]");
+      if (!button || button.disabled) return;
+      setMatchPage(Number(button.dataset.page));
+    });
+  }
+
+  setMatchView(currentMatchView);
+}
+
+function setMatchView(view) {
+  currentMatchView = view === "table" ? "table" : "card";
+
+  const cardList = document.getElementById("rows");
+  const tableWrap = document.getElementById("matchTableWrap");
+
+  if (cardList) cardList.hidden = currentMatchView !== "card";
+  if (tableWrap) tableWrap.hidden = currentMatchView !== "table";
+
+  document.querySelectorAll(".view-toggle").forEach(button => {
+    button.classList.toggle("active", button.dataset.view === currentMatchView);
+  });
+}
+
+function getPagedMatches() {
+  const data = Array.isArray(window.lastMatchData) ? window.lastMatchData : [];
+  const totalPages = Math.max(1, Math.ceil(data.length / MATCHES_PER_PAGE));
+  currentMatchPage = Math.min(Math.max(currentMatchPage, 1), totalPages);
+
+  const start = (currentMatchPage - 1) * MATCHES_PER_PAGE;
+  const end = start + MATCHES_PER_PAGE;
+
+  return {
+    data,
+    pageItems: data.slice(start, end),
+    totalPages,
+    start,
+    end: Math.min(end, data.length)
+  };
+}
+
+function setMatchPage(page) {
+  const data = Array.isArray(window.lastMatchData) ? window.lastMatchData : [];
+  const totalPages = Math.max(1, Math.ceil(data.length / MATCHES_PER_PAGE));
+  currentMatchPage = Math.min(Math.max(Number(page) || 1, 1), totalPages);
+  renderCurrentMatchPage();
+}
+
+function renderPagination(totalCount) {
+  const pagination = document.getElementById("matchPagination");
+  if (!pagination) return;
+
+  const totalPages = Math.ceil(totalCount / MATCHES_PER_PAGE);
+  if (totalPages <= 1) {
+    pagination.innerHTML = "";
+    pagination.hidden = true;
+    return;
+  }
+
+  const start = (currentMatchPage - 1) * MATCHES_PER_PAGE + 1;
+  const end = Math.min(currentMatchPage * MATCHES_PER_PAGE, totalCount);
+
+  const pageButtons = Array.from({ length: totalPages }, (_, index) => {
+    const page = index + 1;
+    return `<button type="button" class="pagination-button ${page === currentMatchPage ? "active" : ""}" data-page="${page}" aria-label="${page}ページ目">${page}</button>`;
+  }).join("");
+
+  pagination.hidden = false;
+  pagination.innerHTML = `
+    <div class="pagination-status">${start}〜${end}件目 / 全${totalCount}試合</div>
+    <button type="button" class="pagination-button" data-page="${currentMatchPage - 1}" ${currentMatchPage <= 1 ? "disabled" : ""}>前へ</button>
+    ${pageButtons}
+    <button type="button" class="pagination-button" data-page="${currentMatchPage + 1}" ${currentMatchPage >= totalPages ? "disabled" : ""}>次へ</button>
+  `;
+}
+
+function escapeAttributeValue(value) {
+  return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function buildLightListRating(match) {
+  const kd = Number(match?.kd || 0);
+  const acs = Number(match?.acs || 0);
+  const hs = Number(match?.hs || 0);
+  const win = Boolean(match?.win);
+
+  let score = 50;
+
+  if (win) score += 10;
+  else score -= 6;
+
+  if (kd >= 1.4) score += 18;
+  else if (kd >= 1.2) score += 13;
+  else if (kd >= 1.0) score += 7;
+  else if (kd < 0.75) score -= 12;
+  else if (kd < 0.9) score -= 6;
+
+  if (acs >= 260) score += 14;
+  else if (acs >= 230) score += 10;
+  else if (acs >= 200) score += 5;
+  else if (acs < 140) score -= 10;
+  else if (acs < 170) score -= 5;
+
+  if (hs >= 30) score += 5;
+  else if (hs >= 22) score += 3;
+  else if (hs < 12) score -= 4;
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  const grade =
+    score >= 88 ? "S" :
+    score >= 75 ? "A" :
+    score >= 62 ? "B" :
+    score >= 48 ? "C" : "D";
+
+  const stars =
+    score >= 88 ? 5 :
+    score >= 75 ? 4 :
+    score >= 62 ? 3 :
+    score >= 48 ? 2 : 1;
+
+  let highlight = "クリックで詳細分析を確認";
+  if (kd >= 1.2 && acs >= 230) highlight = "火力面の内容が良い試合";
+  else if (win && kd >= 1.0) highlight = "勝利に貢献できた試合";
+  else if (!win && kd < 0.9) highlight = "撃ち合いを見直したい試合";
+  else if (acs < 170) highlight = "ラウンド別の動きを確認";
+  else if (hs < 14) highlight = "初弾精度を見直したい試合";
+
+  return { score, grade, stars, highlight };
+}
+
+function renderLightRating(match) {
+  return renderListRating(buildLightListRating(match));
+}
+
+function loadRatingsWithLimit() {
+  // 公開版では一覧の評価に追加APIを使わない。
+  // 詳細分析だけ、クリックされた試合で取得する。
+  return Promise.resolve();
+}
+
+
+function renderMatchCards(pageItems) {
+  const rows = document.getElementById("rows");
+  if (!rows) return [];
+
+  rows.innerHTML = "";
+  const ratingIds = [];
+
+  pageItems.forEach(m => {
+    const card = document.createElement("article");
+    card.className = "match-card-item";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `${m.map} ${m.agent}の試合詳細を開く`);
+
+    const resultText = m.win ? "勝利" : "敗北";
+    const resultClass = m.win ? "win" : "lose";
+    const kd = Number(m.kd || 0);
+    const acs = Number(m.acs || 0);
+    const hs = Number(m.hs || 0);
+    const sideScore = getPlayerSideScore(m);
+
+    card.innerHTML = `
+      <div class="match-card-top">
+        <img class="match-card-agent" src="${escapeHtml(m.agentIcon || "")}" alt="${escapeHtml(m.agent || "エージェント")}">
+        <div class="match-card-main">
+          <div class="match-card-map"><span>${escapeHtml(m.map || "不明")}</span></div>
+          <div class="match-card-meta-row">
+            <div class="match-card-mode">${escapeHtml(translateMode(m.mode))}・${escapeHtml(m.agent || "不明")}</div>
+            ${renderRankPill(m.rank)}
+            ${renderAverageRankPill(m)}
+          </div>
+        </div>
+        <div class="match-result-badge ${resultClass}">${resultText}</div>
+      </div>
+
+      <div class="match-card-score-row">
+        <div>
+          <div class="match-card-score-label">MATCH SCORE</div>
+          <div class="match-card-score">${escapeHtml(sideScore.text)}</div>
+          <div class="match-card-score-note">${escapeHtml(sideScore.note)}</div>
+        </div>
+        <div class="match-card-action">詳細を見る →</div>
+      </div>
+
+      <div class="match-card-stats">
+        <div class="match-card-stat"><span>K/D</span><strong>${Number(m.kills || 0)}/${Number(m.deaths || 0)}</strong></div>
+        <div class="match-card-stat"><span>KD</span><strong>${kd.toFixed(2)}</strong></div>
+        <div class="match-card-stat"><span>ACS</span><strong>${Math.round(acs)}</strong></div>
+        <div class="match-card-stat"><span>HS率</span><strong>${hs.toFixed(1)}%</strong></div>
+      </div>
+
+      <div class="match-card-bottom">
+        ${renderLightRating(m)}
+        <div class="match-card-agent-name">${escapeHtml(m.agent || "不明")}</div>
+      </div>
+    `;
+
+    card.addEventListener("click", () => openMatchDetail(m.matchId, card));
+    card.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openMatchDetail(m.matchId, card);
+      }
+    });
+
+    rows.appendChild(card);
+  });
+
+  return ratingIds;
+}
+
+function renderMatchTable(pageItems) {
+  const tableRows = document.getElementById("tableRows");
+  if (!tableRows) return [];
+
+  tableRows.innerHTML = "";
+  const ratingIds = [];
+
+  pageItems.forEach(m => {
+    const tr = document.createElement("tr");
+    tr.tabIndex = 0;
+    tr.setAttribute("role", "button");
+    tr.setAttribute("aria-label", `${m.map} ${m.agent}の試合詳細を開く`);
+
+    const score = getPlayerSideScore(m);
+    const resultClass = m.win ? "win" : "lose";
+
+    tr.innerHTML = `
+      <td>${renderLightRating(m)}</td>
+      <td><span class="table-result ${resultClass}">${m.win ? "勝利" : "敗北"}</span></td>
+      <td>${escapeHtml(score.text)}<span class="table-score-note">${escapeHtml(score.note)}</span></td>
+      <td>${escapeHtml(m.map || "不明")}</td>
+      <td>
+        <div class="table-agent-cell">
+          <img src="${escapeHtml(m.agentIcon || "")}" alt="${escapeHtml(m.agent || "エージェント")}">
+          <span>${escapeHtml(m.agent || "不明")}</span>
+        </div>
+      </td>
+      <td><span class="table-rank-small">${escapeHtml(normalizeRankName(m.rank))}</span></td>
+      <td><span class="table-rank-small">${escapeHtml(normalizeRankName(m.averageRank))}</span></td>
+      <td>${Number(m.kills || 0)}/${Number(m.deaths || 0)}</td>
+      <td>${Number(m.kd || 0).toFixed(2)}</td>
+      <td>${Number(m.acs || 0)}</td>
+      <td>${Number(m.hs || 0).toFixed(1)}%</td>
+    `;
+
+    tr.addEventListener("click", () => openMatchDetail(m.matchId, tr));
+    tr.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openMatchDetail(m.matchId, tr);
+      }
+    });
+
+    tableRows.appendChild(tr);
+  });
+
+  return ratingIds;
+}
+
+function renderCurrentMatchPage() {
+  const { data, pageItems } = getPagedMatches();
+
+  renderMatchCards(pageItems);
+  renderMatchTable(pageItems);
+
+  setMatchView(currentMatchView);
+  renderPagination(data.length);
+}
+
+function renderTable(data) {
+  window.lastMatchData = Array.isArray(data) ? data : [];
+  currentMatchPage = 1;
+  renderCurrentMatchPage();
+}
+
+function renderSummaryCards(data) {
+  const summaryCards = document.getElementById("summaryCards");
+
+  const totalKills = data.reduce((sum, m) => sum + m.kills, 0);
+  const totalDeaths = data.reduce((sum, m) => sum + m.deaths, 0);
+  const wins = data.filter(m => m.win).length;
+
+  const avgKD = totalKills / (totalDeaths || 1);
+  const winRate = wins / data.length * 100;
+  const avgACS = data.reduce((sum, m) => sum + m.acs, 0) / data.length;
+  const avgHS = data.reduce((sum, m) => sum + m.hs, 0) / data.length;
+
+  summaryCards.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-card-title">平均KD</div>
+      <div class="summary-card-value">${avgKD.toFixed(2)}</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card-title">勝率</div>
+      <div class="summary-card-value">${winRate.toFixed(1)}%</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card-title">平均ACS</div>
+      <div class="summary-card-value">${Math.round(avgACS)}</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card-title">平均HS率</div>
+      <div class="summary-card-value">${avgHS.toFixed(1)}%</div>
+    </div>
+  `;
+}
+
+
+function renderAnalysisComments(data) {
+  const analysisBox = document.getElementById("analysisBox");
+  const analysisComments = document.getElementById("analysisComments");
+
+  analysisBox.style.display = "block";
+
+  if (!Array.isArray(data) || data.length === 0) {
+    analysisComments.innerHTML = `
+      <div class="analysis-comment">
+        分析できる試合データがありません。
+      </div>
+    `;
+    return;
+  }
+
+  const totalKills = data.reduce(
+    (sum, match) => sum + Number(match.kills || 0),
+    0
+  );
+
+  const totalDeaths = data.reduce(
+    (sum, match) => sum + Number(match.deaths || 0),
+    0
+  );
+
+  const wins = data.filter(match => match.win).length;
+  const avgKD = totalKills / Math.max(totalDeaths, 1);
+  const winRate = wins / data.length * 100;
+
+  const avgACS =
+    data.reduce(
+      (sum, match) => sum + Number(match.acs || 0),
+      0
+    ) / data.length;
+
+  const avgHS =
+    data.reduce(
+      (sum, match) => sum + Number(match.hs || 0),
+      0
+    ) / data.length;
+
+  const roleProfile = getRoleProfile(data);
+  const evaluationRole =
+    roleProfile.dominantRole === "mixed"
+      ? roleProfile.mostUsedRole
+      : roleProfile.dominantRole;
+
+  const grade = getOverallGrade({
+    avgKD,
+    winRate,
+    avgACS,
+    role: evaluationRole
+  });
+
+  const roleInfo =
+    ROLE_INFO[roleProfile.dominantRole] || ROLE_INFO.unknown;
+
+  const mostUsedRoleInfo =
+    ROLE_INFO[roleProfile.mostUsedRole] || ROLE_INFO.unknown;
+
+  const strengths = [];
+  const weaknesses = [];
+  const recommendations = [];
+  const notices = [];
+
+  /*
+   * 使用ロールの説明
+   */
+
+  if (roleProfile.dominantRole === "mixed") {
+    notices.push(
+      `複数のロールを使い分けています。最も多いのは${mostUsedRoleInfo.label}で、全体の${roleProfile.dominantShare.toFixed(1)}%です。ロールが異なる試合を単純なKDだけで比較しないように分析しています。`
+    );
+  } else if (roleProfile.dominantRole !== "unknown") {
+    notices.push(
+      `主に${roleInfo.label}を使用しています。${roleInfo.description}のため、この分析ではKDだけでなく勝率やACSも組み合わせて評価しています。`
+    );
+  } else {
+    notices.push(
+      "一部のエージェントのロールを判定できなかったため、ロール補正が不完全な可能性があります。"
+    );
+  }
+
+  /*
+   * ロールに応じた良い点と改善点
+   */
+
+  if (evaluationRole === "duelist") {
+    if (avgKD >= 1.1) {
+      strengths.push(
+        `デュエリスト中心で平均KDは${avgKD.toFixed(2)}です。先頭で交戦する役割を考えると、キル面で安定しています。`
+      );
+    } else if (avgKD < 0.9 && avgACS < 200) {
+      weaknesses.push(
+        `デュエリスト中心で平均KDは${avgKD.toFixed(2)}、平均ACSは${Math.round(avgACS)}です。エントリー時に十分なキルやダメージへつながっていない可能性があります。`
+      );
+      recommendations.push(
+        "一人で深く入りすぎず、味方のフラッシュや索敵に合わせてエントリーし、倒された後に味方がトレードできる距離を意識しましょう。"
+      );
+    } else if (avgKD < 1.0) {
+      notices.push(
+        `デュエリスト中心で平均KDは${avgKD.toFixed(2)}です。ただし、エントリーで味方にスペースを作れている場合はKDだけでは評価できません。`
+      );
+    }
+
+    if (avgACS >= 230) {
+      strengths.push(
+        `平均ACSは${Math.round(avgACS)}で、戦闘によるラウンドへの影響が大きい状態です。`
+      );
+    } else if (avgACS < 190) {
+      weaknesses.push(
+        `デュエリスト中心としては平均ACSが${Math.round(avgACS)}と低めです。交戦へ参加できていないラウンドがないか確認する価値があります。`
+      );
+      recommendations.push(
+        "攻めでは味方の支援スキルと同時に前へ出て、守りでは最初の接敵後に無理な再ピークを避けましょう。"
+      );
+    }
+  } else if (evaluationRole === "initiator") {
+    if (winRate >= 52) {
+      strengths.push(
+        `イニシエーター中心で勝率は${winRate.toFixed(1)}%です。索敵や妨害がチームの勝利につながっている可能性があります。`
+      );
+    }
+
+    if (avgKD >= 1.0) {
+      strengths.push(
+        `支援役を多く使いながら平均KD ${avgKD.toFixed(2)}を維持しており、スキル使用後の交戦にも参加できています。`
+      );
+    } else if (avgKD < 0.8 && winRate < 45) {
+      weaknesses.push(
+        `イニシエーター中心で平均KDは${avgKD.toFixed(2)}、勝率は${winRate.toFixed(1)}%です。KDだけを問題にはしませんが、スキル使用後に孤立して倒されている可能性があります。`
+      );
+      recommendations.push(
+        "索敵やフラッシュを使った直後に味方が動ける距離を保ち、味方と同じタイミングでピークすることを意識しましょう。"
+      );
+    } else if (avgKD < 1.0) {
+      notices.push(
+        `平均KDは${avgKD.toFixed(2)}ですが、イニシエーターは支援が主な役割なので、KDだけで貢献度は判断できません。`
+      );
+    }
+
+    if (avgACS < 180) {
+      notices.push(
+        `平均ACSは${Math.round(avgACS)}です。イニシエーターでは低ACSが直ちに低貢献を意味しませんが、スキル使用後に味方と一緒に交戦できているか確認するとよいです。`
+      );
+    }
+  } else if (evaluationRole === "controller") {
+    if (winRate >= 52) {
+      strengths.push(
+        `コントローラー中心で勝率は${winRate.toFixed(1)}%です。視界管理やエリア制御がラウンド取得につながっている可能性があります。`
+      );
+    }
+
+    if (avgKD >= 1.0) {
+      strengths.push(
+        `スモーク役を担当しながら平均KD ${avgKD.toFixed(2)}を維持しており、終盤の戦闘にも安定して参加できています。`
+      );
+    } else if (avgKD < 0.75 && winRate < 45) {
+      weaknesses.push(
+        `コントローラー中心で平均KDは${avgKD.toFixed(2)}、勝率は${winRate.toFixed(1)}%です。KD単体ではなく、スモーク設置前に倒されていないかを確認する必要があります。`
+      );
+      recommendations.push(
+        "ラウンド序盤は安全な位置からスモークを展開し、設置後やリテイク時まで生存して味方を支援できる動きを意識しましょう。"
+      );
+    } else if (avgKD < 1.0) {
+      notices.push(
+        `平均KDは${avgKD.toFixed(2)}ですが、コントローラーは生存して視界を管理することも重要なため、KDだけでは評価しません。`
+      );
+    }
+
+    if (avgACS < 180) {
+      notices.push(
+        `平均ACSは${Math.round(avgACS)}です。コントローラーは戦闘以外の貢献が数値へ表れにくいため、参考値として扱います。`
+      );
+    }
+  } else if (evaluationRole === "sentinel") {
+    if (winRate >= 52) {
+      strengths.push(
+        `センチネル中心で勝率は${winRate.toFixed(1)}%です。守備や裏取り警戒が試合結果に貢献している可能性があります。`
+      );
+    }
+
+    if (avgKD >= 1.0) {
+      strengths.push(
+        `守備役を担当しながら平均KD ${avgKD.toFixed(2)}を維持しており、サイト維持や終盤戦で安定しています。`
+      );
+    } else if (avgKD < 0.75 && winRate < 45) {
+      weaknesses.push(
+        `センチネル中心で平均KDは${avgKD.toFixed(2)}、勝率は${winRate.toFixed(1)}%です。KDだけを問題にはしませんが、守備設備を活用する前に倒されていないか確認する価値があります。`
+      );
+      recommendations.push(
+        "設置したユーティリティーから情報を得られる位置で待ち、単独で無理に情報を取りに行く回数を減らしましょう。"
+      );
+    } else if (avgKD < 1.0) {
+      notices.push(
+        `平均KDは${avgKD.toFixed(2)}ですが、センチネルは守備や情報管理の貢献が大きいため、KDだけでは評価しません。`
+      );
+    }
+
+    if (avgACS < 180) {
+      notices.push(
+        `平均ACSは${Math.round(avgACS)}です。センチネルでは守備設備や裏取り警戒がACSに表れにくいため、参考値として扱います。`
+      );
+    }
+  } else {
+    if (avgKD >= 1.1) {
+      strengths.push(
+        `平均KDは${avgKD.toFixed(2)}で、撃ち合いは安定しています。`
+      );
+    } else if (avgKD < 0.9 && winRate < 45) {
+      weaknesses.push(
+        `平均KDは${avgKD.toFixed(2)}、勝率は${winRate.toFixed(1)}%です。交戦方法とラウンドへの関わり方を見直す余地があります。`
+      );
+    }
+  }
+
+  /*
+   * 全ロール共通の判定
+   */
+
+  if (winRate >= 58) {
+    strengths.push(
+      `勝率は${winRate.toFixed(1)}%で、直近の試合結果は好調です。`
+    );
+  } else if (winRate < 42) {
+    weaknesses.push(
+      `勝率は${winRate.toFixed(1)}%です。個人の数値だけでなく、人数有利の維持や味方との行動タイミングに改善の余地があります。`
+    );
+    recommendations.push(
+      "キルを狙い続けるより、人数有利では味方と合流し、設置・解除や時間管理を優先しましょう。"
+    );
+  }
+
+  if (avgHS >= 22) {
+    strengths.push(
+      `平均HS率は${avgHS.toFixed(1)}%で、頭の高さを意識した射撃ができています。`
+    );
+  } else if (avgHS < 15 && avgKD < 0.9 && avgACS < 190) {
+    recommendations.push(
+      "射撃場やカスタムでクロスヘアを頭の高さに置き、移動を止めてから初弾を撃つ練習を取り入れましょう。"
+    );
+  } else if (avgHS < 15 && avgKD >= 1.0) {
+    notices.push(
+      `平均HS率は${avgHS.toFixed(1)}%ですが、KDは${avgKD.toFixed(2)}です。使用武器やプレイスタイルの影響もあるため、HS率だけでは問題と判断しません。`
+    );
+  } else if (avgHS >= 20 && avgKD < 1.0) {
+    notices.push(
+      `平均HS率は${avgHS.toFixed(1)}%と悪くありません。エイムよりも、ピーク方法や交戦タイミングが影響している可能性があります。`
+    );
+  }
+
+  /*
+   * マップ別分析
+   */
+
+  const mapAverages = getAverageKDByKey(data, "map")
+    .filter(item => item.count >= 2);
+
+  if (mapAverages.length >= 2) {
+    const sortedMaps = [...mapAverages]
+      .sort((a, b) => b.avgKD - a.avgKD);
+
+    const strongestMap = sortedMaps[0];
+    const weakestMap = sortedMaps[sortedMaps.length - 1];
+
+    if (strongestMap.avgKD >= 1.05) {
+      strengths.push(
+        `${strongestMap.name}では${strongestMap.count}試合の平均KDが${strongestMap.avgKD.toFixed(2)}で、比較的安定しています。`
+      );
+    }
+
+    if (
+      weakestMap.avgKD < 0.9 &&
+      strongestMap.name !== weakestMap.name
+    ) {
+      notices.push(
+        `${weakestMap.name}では${weakestMap.count}試合の平均KDが${weakestMap.avgKD.toFixed(2)}です。ロール構成の違いもあるため断定はしませんが、立ち位置を振り返る候補になります。`
+      );
+
+      recommendations.push(
+        `${weakestMap.name}で使用したエージェントとポジションを確認し、攻めの初動と守りの引き方を見直しましょう。`
+      );
+    }
+  } else {
+    notices.push(
+      "マップ別の傾向を正確に判断するには、同じマップの試合数がまだ不足しています。"
+    );
+  }
+
+  /*
+   * エージェント別分析
+   * 異なるロール同士をKDで直接比較しない
+   */
+
+  const agentAverages = getAverageKDByKey(data, "agent")
+    .map(item => ({
+      ...item,
+      role: getAgentRole(item.name)
+    }))
+    .filter(item => item.count >= 2);
+
+  const comparisonRole =
+    roleProfile.dominantRole === "mixed"
+      ? roleProfile.mostUsedRole
+      : roleProfile.dominantRole;
+
+  const comparableAgents = agentAverages
+    .filter(item => item.role === comparisonRole);
+
+  if (comparableAgents.length >= 2) {
+    const sortedAgents = [...comparableAgents]
+      .sort((a, b) => b.avgKD - a.avgKD);
+
+    const bestAgent = sortedAgents[0];
+    const worstAgent = sortedAgents[sortedAgents.length - 1];
+
+    if (bestAgent.avgKD >= 1.05) {
+      strengths.push(
+        `同じ${ROLE_INFO[comparisonRole].label}内では、${bestAgent.name}使用時の平均KDが${bestAgent.avgKD.toFixed(2)}で最も安定しています。`
+      );
+    }
+
+    if (
+      worstAgent.avgKD < 0.9 &&
+      bestAgent.name !== worstAgent.name
+    ) {
+      notices.push(
+        `同じ${ROLE_INFO[comparisonRole].label}内では、${worstAgent.name}使用時の平均KDが${worstAgent.avgKD.toFixed(2)}です。役割差ではなく、エージェントごとの立ち回りを比較する材料になります。`
+      );
+
+      recommendations.push(
+        `${worstAgent.name}使用時のスキルを使う位置と、使用後に交戦へ参加するタイミングを見直しましょう。`
+      );
+    }
+  } else if (agentAverages.length >= 2) {
+    notices.push(
+      "複数のエージェントを使用していますが、異なるロール同士をKDで直接比較すると不公平になるため、エージェントの優劣判定は行っていません。"
+    );
+  }
+
+  if (strengths.length === 0) {
+    strengths.push(
+      "突出した数値はまだありませんが、ロールを考慮すると大きく崩れているとは断定できません。試合数を増やすと、より正確な傾向を確認できます。"
+    );
+  }
+
+  if (weaknesses.length === 0) {
+    weaknesses.push(
+      "現在のデータから、ロールを考慮しても明確な弱点は見つかりませんでした。"
+    );
+  }
+
+  if (recommendations.length === 0) {
+    recommendations.push(
+      "現在のプレイを維持しながら、同じロール・同じエージェントでの試合数を増やし、安定性を確認しましょう。"
+    );
+  }
+
+  const uniqueStrengths = [...new Set(strengths)];
+  const uniqueWeaknesses = [...new Set(weaknesses)];
+  const uniqueRecommendations = [...new Set(recommendations)];
+  const uniqueNotices = [...new Set(notices)];
+
+  const roleDisplay =
+    roleProfile.dominantRole === "mixed"
+      ? `${roleInfo.label}（最多：${mostUsedRoleInfo.label} ${roleProfile.dominantShare.toFixed(1)}%）`
+      : roleProfile.dominantRole === "unknown"
+        ? roleInfo.label
+        : `${roleInfo.label} ${roleProfile.dominantShare.toFixed(1)}%`;
+
+  analysisComments.innerHTML = `
+    <div class="analysis-summary">
+      <div class="analysis-grade">${grade}</div>
+
+      <div>
+        <div class="analysis-summary-title">総合評価</div>
+        <div class="analysis-summary-text">
+          ${data.length}試合を分析しました。
+          平均KD ${avgKD.toFixed(2)}、
+          勝率 ${winRate.toFixed(1)}%、
+          平均ACS ${Math.round(avgACS)}です。
+        </div>
+
+        <div class="analysis-role">
+          主なロール：${roleDisplay}
+        </div>
+
+        <div class="analysis-role-note">
+          総合評価と改善点は、使用ロールに合わせて基準を調整しています。
+        </div>
+      </div>
+    </div>
+
+    ${createAnalysisSection(
+      "良い点",
+      uniqueStrengths,
+      "strength"
+    )}
+
+    ${createAnalysisSection(
+      "改善したい点",
+      uniqueWeaknesses,
+      "weakness"
+    )}
+
+    ${createAnalysisSection(
+      "おすすめの練習・意識",
+      uniqueRecommendations,
+      "recommendation"
+    )}
+
+    ${
+      uniqueNotices.length > 0
+        ? createAnalysisSection(
+            "分析上の注意",
+            uniqueNotices,
+            "notice"
+          )
+        : ""
+    }
+  `;
+}
+
+
+
+function getOverallGrade({ avgKD, winRate, avgACS, role = "unknown" }) {
+  let score = 0;
+
+  const supportRole =
+    role === "initiator" ||
+    role === "controller" ||
+    role === "sentinel";
+
+  if (supportRole) {
+    if (avgKD >= 1.1) score += 30;
+    else if (avgKD >= 1.0) score += 26;
+    else if (avgKD >= 0.9) score += 22;
+    else if (avgKD >= 0.8) score += 18;
+    else score += 12;
+
+    if (winRate >= 60) score += 42;
+    else if (winRate >= 55) score += 36;
+    else if (winRate >= 50) score += 30;
+    else if (winRate >= 45) score += 22;
+    else score += 14;
+
+    if (avgACS >= 220) score += 28;
+    else if (avgACS >= 200) score += 24;
+    else if (avgACS >= 180) score += 20;
+    else if (avgACS >= 160) score += 16;
+    else score += 12;
+  } else {
+    if (avgKD >= 1.2) score += 40;
+    else if (avgKD >= 1.1) score += 34;
+    else if (avgKD >= 1.0) score += 28;
+    else if (avgKD >= 0.9) score += 20;
+    else score += 12;
+
+    if (winRate >= 60) score += 30;
+    else if (winRate >= 55) score += 26;
+    else if (winRate >= 50) score += 22;
+    else if (winRate >= 45) score += 16;
+    else score += 10;
+
+    if (avgACS >= 240) score += 30;
+    else if (avgACS >= 220) score += 26;
+    else if (avgACS >= 200) score += 22;
+    else if (avgACS >= 180) score += 16;
+    else score += 10;
+  }
+
+  if (score >= 90) return "S";
+  if (score >= 80) return "A";
+  if (score >= 70) return "B";
+  if (score >= 60) return "C";
+  return "D";
+}
+
+
+function createAnalysisSection(title, items, className) {
+  return `
+    <section class="analysis-section ${className}">
+      <h3>${title}</h3>
+      <div class="analysis-list">
+        ${items.map(item => `
+          <div class="analysis-item">${item}</div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function getAverageKDByKey(data, key) {
+  const stats = {};
+
+  data.forEach(m => {
+    const name = m[key] || "不明";
+
+    if (!stats[name]) {
+      stats[name] = { kills: 0, deaths: 0, count: 0 };
+    }
+
+    stats[name].kills += Number(m.kills || 0);
+    stats[name].deaths += Number(m.deaths || 0);
+    stats[name].count++;
+  });
+
+  return Object.keys(stats).map(name => ({
+    name,
+    count: stats[name].count,
+    avgKD: stats[name].kills / Math.max(stats[name].deaths, 1)
+  }));
+}
+
+function renderKDBreakdown(items, listId, summaryId) {
+  const list = document.getElementById(listId);
+  const summary = document.getElementById(summaryId);
+  const sorted = [...(items || [])].sort((a, b) => b.avgKD - a.avgKD);
+
+  if (!sorted.length) {
+    list.innerHTML = `<div class="detail-analysis-placeholder">表示できるデータがありません。</div>`;
+    summary.innerHTML = "";
+    return;
+  }
+
+  const best = sorted[0];
+  const weakest = sorted[sorted.length - 1];
+
+  summary.innerHTML = `
+    <div class="kd-summary-card best">
+      <div class="kd-summary-label">得意</div>
+      <div class="kd-summary-name">${escapeHtml(best.name)}</div>
+      <div class="kd-summary-value">KD ${Number(best.avgKD).toFixed(2)}</div>
+    </div>
+    <div class="kd-summary-card weak">
+      <div class="kd-summary-label">要確認</div>
+      <div class="kd-summary-name">${escapeHtml(weakest.name)}</div>
+      <div class="kd-summary-value">KD ${Number(weakest.avgKD).toFixed(2)}</div>
+    </div>
+  `;
+
+  list.innerHTML = sorted.map(item => `
+    <div class="kd-number-row">
+      <span class="kd-number-name">${escapeHtml(item.name)}</span>
+      <span class="kd-number-games">${Number(item.count || 0)}試合</span>
+      <span class="kd-number-value">${Number(item.avgKD).toFixed(2)}</span>
+    </div>
+  `).join("");
+}
+
+function drawGraph(data) {
+  const items = getAverageKDByKey(data, "map");
+  const canvas = document.getElementById("graph");
+  drawBarChart(canvas, items, "#ff4655");
+  renderKDBreakdown(items, "mapKDList", "mapKDSummary");
+}
+
+function drawAgentGraph(data) {
+  const items = getAverageKDByKey(data, "agent");
+  const canvas = document.getElementById("agentGraph");
+  drawBarChart(canvas, items, "#00d4ff");
+  renderKDBreakdown(items, "agentKDList", "agentKDSummary");
+}
+
+function drawBarChart(canvas, items, color) {
+  if (!canvas) return;
+
+  const parentRect = canvas.parentElement?.getBoundingClientRect();
+  const rect = canvas.getBoundingClientRect();
+
+  const measuredWidth = parentRect?.width || rect.width || 0;
+  const measuredHeight = parentRect?.height || rect.height || 0;
+
+  const cssWidth = Math.max(Math.round(measuredWidth), 360);
+  const cssHeight = Math.max(Math.round(measuredHeight), 260);
+  const pixelRatio = Math.max(window.devicePixelRatio || 1, 1);
+
+  canvas.width = Math.round(cssWidth * pixelRatio);
+  canvas.height = Math.round(cssHeight * pixelRatio);
+
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  ctx.clearRect(0, 0, cssWidth, cssHeight);
+  ctx.fillStyle = "#0f1b26";
+  ctx.fillRect(0, 0, cssWidth, cssHeight);
+
+  const sortedItems = [...(items || [])].sort((a, b) => b.avgKD - a.avgKD);
+
+  if (!sortedItems.length) {
+    ctx.fillStyle = "#9fb0c2";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("表示できるデータがありません", cssWidth / 2, cssHeight / 2);
+    return;
+  }
+
+  const left = 42;
+  const right = 18;
+  const top = 28;
+  const bottom = 52;
+  const chartWidth = cssWidth - left - right;
+  const chartHeight = cssHeight - top - bottom;
+  const maxValue = Math.max(...sortedItems.map(item => Number(item.avgKD || 0)), 1);
+  const yMax = Math.ceil(maxValue * 5) / 5;
+  const baseY = top + chartHeight;
+
+  ctx.strokeStyle = "#2f4052";
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#8fa2b3";
+  ctx.font = "11px Arial";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+
+  for (let step = 0; step <= 4; step += 1) {
+    const ratio = step / 4;
+    const y = baseY - chartHeight * ratio;
+    const label = yMax * ratio;
+
+    ctx.beginPath();
+    ctx.moveTo(left, y);
+    ctx.lineTo(cssWidth - right, y);
+    ctx.stroke();
+    ctx.fillText(label.toFixed(1), left - 7, y);
+  }
+
+  const slotWidth = chartWidth / sortedItems.length;
+  const barWidth = Math.max(12, Math.min(48, slotWidth * 0.58));
+
+  sortedItems.forEach((item, index) => {
+    const value = Number(item.avgKD || 0);
+    const height = yMax ? value / yMax * chartHeight : 0;
+    const x = left + slotWidth * index + (slotWidth - barWidth) / 2;
+    const y = baseY - height;
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    const radius = Math.min(6, barWidth / 3, height / 2);
+    ctx.roundRect(x, y, barWidth, height, [radius, radius, 0, 0]);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 11px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(value.toFixed(2), x + barWidth / 2, y - 5);
+
+    const label = String(item.name || "");
+    const shortLabel = label.length > 9 ? `${label.slice(0, 8)}…` : label;
+    ctx.fillStyle = "#d7e0e8";
+    ctx.font = "11px Arial";
+    ctx.textBaseline = "top";
+    ctx.fillText(shortLabel, x + barWidth / 2, baseY + 9);
+  });
+}
+
+let graphResizeTimer = null;
+let currentMatchView = "card";
+window.addEventListener("resize", () => {
+  clearTimeout(graphResizeTimer);
+  graphResizeTimer = setTimeout(() => {
+    if (!Array.isArray(window.lastMatchData) || !window.lastMatchData.length) return;
+    drawGraph(window.lastMatchData);
+    drawAgentGraph(window.lastMatchData);
+  }, 150);
+});
+
+
+function setSearchLoading(isLoading) {
+  const button = document.getElementById("searchButton");
+  if (!button) return;
+  button.classList.toggle("is-loading", isLoading);
+  button.disabled = isLoading;
+  button.setAttribute("aria-busy", String(isLoading));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initMatchViewToggle();
+
+  const form = document.getElementById("playerSearchForm");
+  if (form) {
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      setSearchLoading(true);
+      try {
+        await load();
+      } finally {
+        setSearchLoading(false);
+      }
+    });
+  }
+
+  const loadMoreButton = document.getElementById("loadMoreButton");
+  if (loadMoreButton) {
+    loadMoreButton.addEventListener("click", loadMoreMatches);
+  }
+});
+
+
+function showSearchResults(){
+  const intro=document.getElementById("preSearchIntro");
+  const results=document.getElementById("resultsArea");
+  if(intro&&!intro.hidden){intro.classList.add("is-hiding");setTimeout(()=>{intro.hidden=true},300)}
+  if(results){results.hidden=false;results.classList.add("is-visible")}
+}
+function resetSearchMessageState(){
+  const message=document.getElementById("message");
+  if(message){
+    message.classList.remove("success","error");
+  }
+}
+document.addEventListener("DOMContentLoaded",()=>{
+  const form=document.getElementById("playerSearchForm");
+  if(form)form.addEventListener("submit",resetSearchMessageState);
+});
+
+
+
+const LEGAL_TITLES = {
+  terms: "利用規約",
+  privacy: "プライバシーポリシー",
+  about: "このサービスについて"
+};
+
+function openLegalModal(target = "terms") {
+  const modal = document.getElementById("legalModal");
+  const title = document.getElementById("legalModalTitle");
+  if (!modal) return;
+
+  const tabName = LEGAL_TITLES[target] ? target : "terms";
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("legal-open");
+
+  document.querySelectorAll("[data-legal-tab]").forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.legalTab === tabName);
+  });
+
+  document.querySelectorAll("[data-legal-panel]").forEach(panel => {
+    panel.classList.toggle("active", panel.dataset.legalPanel === tabName);
+  });
+
+  if (title) title.textContent = LEGAL_TITLES[tabName];
+
+  const closeButton = modal.querySelector("[data-legal-close]");
+  if (closeButton) closeButton.focus();
+}
+
+function closeLegalModal() {
+  const modal = document.getElementById("legalModal");
+  if (!modal) return;
+
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("legal-open");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("[data-legal-open]").forEach(button => {
+    button.addEventListener("click", () => openLegalModal(button.dataset.legalOpen));
+  });
+
+  document.querySelectorAll("[data-legal-close]").forEach(button => {
+    button.addEventListener("click", closeLegalModal);
+  });
+
+  document.querySelectorAll("[data-legal-tab]").forEach(button => {
+    button.addEventListener("click", () => openLegalModal(button.dataset.legalTab));
+  });
+
+  document.addEventListener("keydown", event => {
+    const modal = document.getElementById("legalModal");
+    if (event.key === "Escape" && modal?.classList.contains("open")) {
+      closeLegalModal();
+    }
+  });
+});
+
+</script>
+
+</body>
+</html>

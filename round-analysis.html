@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RoundCoach | ラウンド分析</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#08131d;--panel:#0f1d29;--panel2:#132331;--line:#263a4a;
+  --text:#edf5fb;--muted:#91a5b7;--green:#36d399;--red:#ff5f69;--blue:#55c7ff;--gold:#f7c948;
+}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans JP",sans-serif}
+button,a,select{font:inherit}
+button{cursor:pointer}
+.page{min-height:100vh;display:grid;grid-template-columns:280px minmax(0,1fr)}
+.sidebar{position:sticky;top:0;height:100vh;overflow:auto;padding:18px;background:#0a1722;border-right:1px solid var(--line)}
+
+.side-brand{display:flex;gap:10px;align-items:center;margin-bottom:14px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#0f1d29}
+.side-logo{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:#ff4655;color:#fff;font-weight:900;font-size:13px;box-shadow:0 8px 22px rgba(255,70,85,.24)}
+.side-brand strong{display:block;color:var(--text);font-size:15px;line-height:1}
+.side-brand span{display:block;margin-top:5px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.08em}
+
+.back{display:inline-flex;color:#b8c8d6;text-decoration:none;margin-bottom:18px}
+.match-card,.side-card,.topbar,.map-panel,.event-panel,.timeline{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.match-card{padding:14px;margin-bottom:14px}
+.match-map{font-size:22px;font-weight:900}.match-meta{color:var(--muted);font-size:12px;margin-top:5px}
+.match-score{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:20px;font-weight:900}
+.round-title{display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px;font-weight:900}
+.round-list{display:grid;gap:6px}
+.round-button{width:100%;display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:center;padding:10px;border:1px solid transparent;border-radius:9px;background:#0f1d29;color:var(--text);text-align:left}
+.round-button:hover{background:#172938}.round-button.active{border-color:var(--red);background:rgba(255,95,105,.12)}
+.round-button.win .round-result{color:var(--green)}.round-button.lose .round-result{color:var(--red)}
+.round-num{font-weight:900}.round-result{font-weight:800}.round-side{font-size:11px;color:var(--muted)}
+.main{min-width:0;padding:22px}
+.topbar{display:grid;grid-template-columns:auto auto auto 1fr;gap:18px;align-items:center;padding:18px;margin-bottom:16px}
+.top-round{font-size:25px;font-weight:900}.status{padding:7px 11px;border-radius:8px;font-weight:900}
+.status.win{color:var(--green);border:1px solid var(--green);background:rgba(54,211,153,.08)}
+.status.lose{color:var(--red);border:1px solid var(--red);background:rgba(255,95,105,.08)}
+.metric-label{color:var(--muted);font-size:11px}.metric-value{font-size:18px;font-weight:900;margin-top:3px}
+.round-summary{justify-self:end;color:#c9d5df;line-height:1.6}
+.content-grid{display:grid;grid-template-columns:minmax(520px,1fr) 350px;gap:16px}
+.map-panel{padding:16px;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.panel-head h2,.event-panel h2{margin:0;font-size:18px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;color:var(--muted);font-size:12px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}.dot.green{background:var(--green)}.dot.red{background:var(--red)}.dot.blue{background:var(--blue)}
+.map-stage{position:relative;width:min(100%,70vh);aspect-ratio:1/1;margin:0 auto;background:#08131d;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.map-image,.map-svg{position:absolute;inset:0;width:100%;height:100%}.map-image{object-fit:contain;pointer-events:none;user-select:none}.map-svg{overflow:visible}
+.kill-line{stroke-width:.42;opacity:.76}.kill-line.my-kill{stroke:var(--green)}.kill-line.my-death{stroke:var(--red)}.kill-line.other-kill{stroke:var(--blue);opacity:.45}
+.marker{stroke:#05101a;stroke-width:.34;cursor:pointer}.marker.my-kill{fill:var(--green)}.marker.my-death{fill:var(--red)}.marker.other-kill{fill:var(--blue)}
+.marker.selected{stroke:#fff;stroke-width:.8}.marker-number{fill:#061019;font-size:2.4px;font-weight:900;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.event-panel{padding:16px;min-width:0}.event-detail{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:11px;background:#0a1722}
+.event-time{color:var(--muted);font-size:12px}.event-main{font-size:19px;font-weight:900;margin:8px 0}.event-main.good{color:var(--green)}.event-main.bad{color:var(--red)}
+.event-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #203443}.event-row:first-of-type{border-top:0}
+.event-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event-value{color:#d7e3ec;text-align:right}
+.round-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}.stat{padding:11px;border:1px solid var(--line);border-radius:9px;background:#0a1722}.stat span{display:block;color:var(--muted);font-size:11px}.stat strong{display:block;margin-top:5px;font-size:17px}
+.timeline{margin-top:16px;padding:16px}.timeline h2{margin:0 0 12px;font-size:18px}.event-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.event-card{padding:12px;border:1px solid var(--line);border-radius:10px;background:#0a1722;color:var(--text);text-align:left}.event-card:hover,.event-card.active{border-color:var(--blue);background:#102536}
+.event-card.my-kill{border-left:3px solid var(--green)}.event-card.my-death{border-left:3px solid var(--red)}.event-card.other-kill{border-left:3px solid var(--blue)}
+.event-card-top{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}.event-card-title{font-weight:900;margin-top:8px}.empty{padding:22px;text-align:center;color:var(--muted)}
+.loading,.error{max-width:700px;margin:80px auto;padding:24px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}.error{color:#ff9aa2}
+@media(max-width:1050px){.page{grid-template-columns:220px minmax(0,1fr)}.content-grid{grid-template-columns:1fr}.event-panel{order:2}.topbar{grid-template-columns:repeat(3,auto)}.round-summary{grid-column:1/-1;justify-self:start}}
+@media(max-width:720px){.page{display:block}.sidebar{position:static;height:auto}.round-list{grid-template-columns:repeat(4,1fr)}.round-button{grid-template-columns:1fr;text-align:center}.round-side{display:none}.main{padding:12px}.content-grid{display:block}.map-panel,.event-panel,.timeline{margin-bottom:12px}.topbar{grid-template-columns:1fr 1fr}.round-summary{grid-column:1/-1}.round-list{max-height:260px;overflow:auto}}
+
+/* 大画面キルマップ：エージェントアイコン版 */
+.map-stage{isolation:isolate}
+.map-svg{z-index:2;pointer-events:none}
+.map-marker-layer{position:absolute;inset:0;z-index:3;pointer-events:none}
+.map-agent{
+  position:absolute;width:44px;height:44px;transform:translate(-50%,-50%);
+  padding:0;margin:0;border:0;border-radius:50%;background:transparent;
+  pointer-events:auto;cursor:pointer;filter:drop-shadow(0 5px 9px rgba(0,0,0,.65));
+  transition:transform .14s ease
+}
+.map-agent:hover,.map-agent.selected{transform:translate(-50%,-50%) scale(1.14);z-index:20}
+.map-agent-frame{
+  position:absolute;inset:0;overflow:hidden;border:3px solid var(--blue);
+  border-radius:50%;background:#09151f;box-shadow:0 0 0 2px rgba(4,10,16,.92)
+}
+.map-agent.enemy .map-agent-frame{border-color:var(--red)}
+.map-agent.me .map-agent-frame{
+  border-color:#ffd166;
+  box-shadow:0 0 0 2px rgba(4,10,16,.92),0 0 16px rgba(255,209,102,.85)
+}
+.map-agent img{width:100%;height:100%;object-fit:cover;display:block}
+.map-agent-order{
+  position:absolute;right:-4px;top:-5px;width:18px;height:18px;display:grid;
+  place-items:center;border:2px solid #07111a;border-radius:50%;
+  background:#f7c948;color:#101820;font-size:10px;font-weight:900
+}
+.map-death{
+  position:absolute;width:25px;height:25px;display:grid;place-items:center;
+  transform:translate(-50%,-50%);padding:0;margin:0;border:2px solid var(--red);
+  border-radius:50%;background:rgba(25,8,12,.94);color:#ff8d96;
+  font-size:22px;font-weight:900;line-height:1;pointer-events:auto;cursor:pointer;
+  filter:drop-shadow(0 4px 7px rgba(0,0,0,.65))
+}
+.map-death.selected{box-shadow:0 0 0 3px rgba(255,255,255,.7)}
+.kill-line{stroke-width:.48;stroke-linecap:round;opacity:.72}
+.kill-line.my-kill{stroke:var(--green)} .kill-line.my-death{stroke:var(--red)}
+.kill-line.other-kill{stroke:#9aa9b7;opacity:.5}
+.event-number{
+  width:22px;height:22px;display:grid;place-items:center;border-radius:50%;
+  background:#f7c948;color:#111820;font-weight:900
+}
+.event-agent-row{
+  display:grid;grid-template-columns:36px minmax(0,1fr) 36px;
+  align-items:center;gap:9px;margin-top:9px
+}
+.event-agent{
+  width:34px;height:34px;overflow:hidden;border:2px solid var(--blue);
+  border-radius:50%;background:#07131d
+}
+.event-agent.enemy{border-color:var(--red)} .event-agent.me{border-color:#ffd166}
+.event-agent img{width:100%;height:100%;object-fit:cover}
+.event-versus{min-width:0;text-align:center;color:var(--muted);font-size:11px}
+@media(max-width:720px){
+  .map-agent{width:36px;height:36px}.map-death{width:22px;height:22px;font-size:19px}
+}
+
+/* 小型アイコン＋方向矢印 */
+.map-agent,.map-victim{
+  position:absolute;width:32px;height:32px;transform:translate(-50%,-50%);
+  padding:0;margin:0;border:0;border-radius:50%;background:transparent;
+  pointer-events:auto;cursor:pointer;filter:drop-shadow(0 4px 7px rgba(0,0,0,.62));
+}
+.map-agent-frame,.map-victim-frame{
+  position:absolute;inset:0;overflow:hidden;border:2px solid var(--blue);
+  border-radius:50%;background:#09151f;box-shadow:0 0 0 2px rgba(4,10,16,.92);
+}
+.map-agent.enemy .map-agent-frame,.map-victim.enemy .map-victim-frame{border-color:var(--red)}
+.map-agent.me .map-agent-frame,.map-victim.me .map-victim-frame{
+  border-color:#ffd166;
+  box-shadow:0 0 0 2px rgba(4,10,16,.92),0 0 12px rgba(255,209,102,.75);
+}
+.map-agent img,.map-victim img{width:100%;height:100%;object-fit:cover}
+.map-victim-frame{filter:brightness(.82) saturate(.9)}
+.map-victim .map-agent-order{left:-5px;right:auto;background:var(--red);color:#fff}
+.map-death{display:none !important}
+.kill-line{stroke-width:.55 !important;opacity:.88 !important}
+@media(max-width:720px){
+  .map-agent,.map-victim{width:27px;height:27px}
+}
+
+/* ラウンド評価 */
+.round-analysis-card{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#0a1722;
+}
+.round-analysis-head{
+  display:grid;
+  grid-template-columns:76px minmax(0,1fr);
+  gap:13px;
+  align-items:center;
+}
+.round-score{
+  width:72px;
+  height:72px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border:3px solid var(--gold);
+  border-radius:50%;
+  background:#0d1b26;
+}
+.round-score strong{font-size:25px;line-height:1}
+.round-score span{margin-top:4px;color:var(--muted);font-size:10px}
+.round-grade{font-size:20px;font-weight:900}
+.round-analysis-summary{margin-top:5px;color:#cbd7e1;line-height:1.55;font-size:13px}
+.round-priority{
+  margin-top:9px;
+  padding:8px 10px;
+  border:1px solid rgba(247,201,72,.45);
+  border-radius:8px;
+  background:rgba(247,201,72,.08);
+  color:#ffe18b;
+  font-size:12px;
+  font-weight:800;
+}
+.round-analysis-columns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:12px;
+}
+.round-analysis-box{
+  padding:11px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#0e1d29;
+}
+.round-analysis-box.good{border-top:3px solid var(--green)}
+.round-analysis-box.bad{border-top:3px solid var(--red)}
+.round-analysis-box h3{margin:0 0 7px;font-size:13px}
+.round-analysis-box ul{margin:0;padding-left:18px;color:#cbd7e1;font-size:12px;line-height:1.6}
+.round-evidence{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:10px;
+}
+.round-evidence span{
+  padding:4px 7px;
+  border-radius:999px;
+  background:#13293a;
+  color:#a9c0d1;
+  font-size:10px;
+}
+.round-analysis-note{
+  margin-top:10px;
+  padding-top:9px;
+  border-top:1px solid #203443;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.5;
+}
+.round-mini-score{
+  min-width:31px;
+  padding:3px 6px;
+  border:1px solid #365064;
+  border-radius:7px;
+  color:#dce8f0;
+  font-size:10px;
+  text-align:center;
+}
+@media(max-width:720px){
+  .round-analysis-columns{grid-template-columns:1fr}
+}
+
+
+.jump-notice {
+  margin: 10px 0 2px;
+  padding: 8px 10px;
+  border: 1px solid rgba(85, 199, 255, .35);
+  border-radius: 8px;
+  background: rgba(85, 199, 255, .07);
+  color: #a9e8ff;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+
+/* キル詳細：キャラ名をメイン表示 */
+.event-main-sub {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.event-player-main {
+  font-weight: 900;
+  color: #f1f7fb;
+}
+
+.event-player-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.event-agent-name {
+  font-weight: 900;
+  color: #f2f7fb;
+}
+
+.event-account-name {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">ラウンド分析を読み込んでいます...</div></div>
+<script>
+const app = document.getElementById("app");
+const params = new URLSearchParams(location.search);
+const matchId = params.get("matchId");
+let detail = null;
+let selectedRound = Number(params.get("round") || 1);
+let selectedEventId = params.get("event") || "";
+
+function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function time(ms){const s=Math.max(0,Math.floor(Number(ms||0)/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`}
+function sideLabel(s){return s==="attack"?"攻撃":"防衛"}
+function eventType(e){if(e?.killer?.isMe)return"my-kill";if(e?.victim?.isMe)return"my-death";return"other-kill"}
+
+function playerAccountName(player){
+  const p=eventPlayer(player);
+  const name=p?.name||player?.name||"不明";
+  const tag=p?.tag||player?.tag||"";
+  return tag ? `${name}#${tag}` : name;
+}
+
+function playerAgentName(player){
+  const p=eventPlayer(player);
+  const agent=p?.agent||player?.agent||"";
+  return agent && agent !== "不明" ? agent : playerAccountName(player);
+}
+
+function eventLabel(e){
+  if(e?.killer?.isMe)return`${playerAgentName(e?.victim)}を倒した`;
+  if(e?.victim?.isMe)return`${playerAgentName(e?.killer)}に倒された`;
+  return`${playerAgentName(e?.killer)}が${playerAgentName(e?.victim)}を倒した`;
+}
+function position(loc,map){if(!loc||!map)return null;const left=Number(loc.y||0)*Number(map.xMultiplier||0)+Number(map.xScalarToAdd||0);const top=Number(loc.x||0)*Number(map.yMultiplier||0)+Number(map.yScalarToAdd||0);if(!Number.isFinite(left)||!Number.isFinite(top))return null;return{left:Math.max(0,Math.min(1,left))*100,top:Math.max(0,Math.min(1,top))*100}}
+function playerByPuuid(id){return [...(detail.teams?.ally||[]),...(detail.teams?.enemy||[])].find(p=>p.puuid===id)||{}}
+function roundData(){return (detail.rounds||[]).find(r=>Number(r.number)===selectedRound)||(detail.rounds||[])[0]||{}}
+function roundEvents(){return (detail.killMapEvents||[]).filter(e=>Number(e.round)===selectedRound).sort((a,b)=>a.timeMs-b.timeMs)}
+function getSelectedEvent(){const events=roundEvents();return events.find(e=>e.id===selectedEventId)||events[0]||null}
+
+
+function updateAnalysisUrl() {
+  const next = new URLSearchParams({
+    matchId: String(matchId || ""),
+    round: String(selectedRound)
+  });
+
+  if (selectedEventId) next.set("event", selectedEventId);
+  history.replaceState(null, "", `?${next.toString()}`);
+}
+
+function render(){
+  const rounds=detail.rounds||[];
+  if(!rounds.length){app.innerHTML='<div class="error">ラウンド情報がありません。</div>';return}
+  if(!rounds.some(r=>Number(r.number)===selectedRound))selectedRound=Number(rounds[0].number);
+  const r=roundData();
+  const events=roundEvents();
+  if(!events.some(e=>e.id===selectedEventId)){
+    selectedEventId=events[0]?.id||"";
+  }
+  const ev=getSelectedEvent();
+  const allyScore=rounds.filter(x=>Number(x.number)<=selectedRound&&x.won).length;
+  const enemyScore=selectedRound-allyScore;
+  app.innerHTML=`
+  <div class="page">
+    <aside class="sidebar">
+      <div class="side-brand" aria-label="RoundCoach">
+        <div class="side-logo">RC</div>
+        <div><strong>RoundCoach</strong><span>ROUND ANALYSIS</span></div>
+      </div>
+      <a class="back" href="index.html">← 試合一覧へ戻る</a>
+      <div class="match-card">
+        <div class="match-map">${esc(detail.map)}</div>
+        <div class="match-meta">${esc(detail.mode)}・${esc(new Date(detail.startedAt).toLocaleString("ja-JP"))}</div>
+        <div class="match-score"><span>${Number(detail.myTeamScore||0)} : ${Number(detail.enemyTeamScore||0)}</span><span class="${detail.win?"win":"lose"}">${detail.win?"勝利":"敗北"}</span></div>
+      </div>
+      <div class="round-title"><span>全ラウンド</span><span>${rounds.length}</span></div>
+      <div class="round-list">
+        ${rounds.map(x=>`
+          <button class="round-button ${x.won?"win":"lose"} ${Number(x.number)===selectedRound?"active":""}" data-round="${Number(x.number)}">
+            <span class="round-num">R${Number(x.number)}</span>
+            <span><span class="round-result">${x.won?"勝利":"敗北"}</span><span class="round-side">・${sideLabel(x.side)}</span></span>
+            <span>
+              <span class="round-mini-score">${Number(x.roundAnalysis?.score ?? 0)}点</span>
+              ${Number(x.kills||0)}/${Number(x.deaths||0)}
+            </span>
+          </button>`).join("")}
+      </div>
+    </aside>
+    <main class="main">
+      <section class="topbar">
+        <div class="top-round">ROUND ${selectedRound}</div>
+        <div class="status ${r.won?"win":"lose"}">${r.won?"勝利":"敗北"}</div>
+        <div><div class="metric-label">スコア</div><div class="metric-value">${allyScore} - ${enemyScore}</div></div>
+        <div class="round-summary">${esc(sideLabel(r.side))}側・${esc(r.endType||"終了理由不明")}<br>K/D ${Number(r.kills||0)}/${Number(r.deaths||0)}・${Number(r.damage||0)}ダメージ</div>
+      </section>
+      <div class="content-grid">
+        <section class="map-panel">
+          <div class="panel-head"><h2>ラウンド内のキル位置</h2><div class="legend"><span><i class="dot green"></i>あなたが倒した</span><span><i class="dot red"></i>あなたが倒された</span><span><i class="dot blue"></i>ほかのプレイヤー同士</span></div></div>
+          ${detail.mapData?.image?`
+          <div class="map-stage">
+            <img class="map-image" src="${esc(detail.mapData.image)}" alt="${esc(detail.map)}">
+            <svg class="map-svg" viewBox="0 0 100 100">${renderMapLines(events)}</svg>
+            <div class="map-marker-layer">${renderMapMarkers(events)}</div>
+          </div>`:`<div class="empty">マップ画像を取得できませんでした。</div>`}
+        </section>
+        <aside class="event-panel">
+          <h2>選択したキルの詳細</h2>
+          ${params.get("round") ? `<div class="jump-notice">分析結果からR${selectedRound}を開いています。</div>` : ""}
+          ${renderEventDetail(ev,r)}
+          ${renderRoundAnalysis(r)}
+        </aside>
+      </div>
+      <section class="timeline">
+        <h2>ラウンド内のキル履歴</h2>
+        <div class="event-cards">${events.length?events.map((e,i)=>renderEventCard(e,i)).join(""):`<div class="empty">このラウンドにはキルイベントがありません。</div>`}</div>
+      </section>
+    </main>
+  </div>`;
+  bind();
+}
+function playerTeamClass(player){
+  if(player?.isMe)return"ally me";
+  return String(player?.team||"").toLowerCase()===String(detail.playerTeam||"").toLowerCase()
+    ?"ally":"enemy";
+}
+function eventPlayer(player){
+  return playerByPuuid(player?.puuid)||player||{};
+}
+function renderMapLines(events){
+  const defs=`
+    <defs>
+      <marker id="round-arrow-my-kill" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+        <path d="M0,0 L5,2.5 L0,5 Z" fill="var(--green)"></path>
+      </marker>
+      <marker id="round-arrow-my-death" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+        <path d="M0,0 L5,2.5 L0,5 Z" fill="var(--red)"></path>
+      </marker>
+      <marker id="round-arrow-other-kill" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+        <path d="M0,0 L5,2.5 L0,5 Z" fill="#9aa9b7"></path>
+      </marker>
+    </defs>`;
+  return defs+events.map(e=>{
+    const a=position(e.killerLocation,detail.mapData);
+    const b=position(e.victimLocation,detail.mapData);
+    if(!a||!b)return"";
+    const type=eventType(e);
+    return`<line class="kill-line ${type}" x1="${a.left}" y1="${a.top}"
+      x2="${b.left}" y2="${b.top}" marker-end="url(#round-arrow-${type})"></line>`;
+  }).join("")
+}
+
+function renderMapMarkers(events){
+  return events.map((e,i)=>{
+    const a=position(e.killerLocation,detail.mapData);
+    const b=position(e.victimLocation,detail.mapData);
+    if(!a||!b)return"";
+
+    const killer=eventPlayer(e.killer);
+    const victim=eventPlayer(e.victim);
+    const selected=e.id===selectedEventId?" selected":"";
+    const killerIcon=e.killer?.agentIcon||killer.agentIcon||"";
+    const victimIcon=e.victim?.agentIcon||victim.agentIcon||"";
+    const killerAgent=e.killer?.agent||killer.agent||"?";
+    const victimAgent=e.victim?.agent||victim.agent||"?";
+
+    return`
+      <button class="map-agent ${playerTeamClass(e.killer)}${selected}"
+              style="left:${a.left}%;top:${a.top}%"
+              data-event="${esc(e.id)}"
+              title="${i+1}. ${esc(e.killer?.name)}（${esc(killerAgent)}）が倒した">
+        <span class="map-agent-frame">
+          ${killerIcon?`<img src="${esc(killerIcon)}" alt="${esc(killerAgent)}">`:esc(String(killerAgent).slice(0,1))}
+        </span>
+        <span class="map-agent-order">${i+1}</span>
+      </button>
+      <button class="map-victim ${playerTeamClass(e.victim)}${selected}"
+              style="left:${b.left}%;top:${b.top}%"
+              data-event="${esc(e.id)}"
+              title="${i+1}. ${esc(e.victim?.name)}（${esc(victimAgent)}）が倒された地点">
+        <span class="map-victim-frame">
+          ${victimIcon?`<img src="${esc(victimIcon)}" alt="${esc(victimAgent)}">`:esc(String(victimAgent).slice(0,1))}
+        </span>
+        <span class="map-agent-order">${i+1}</span>
+      </button>`;
+  }).join("")
+}
+
+
+function renderRoundAnalysis(r){
+  const a=r?.roundAnalysis||{};
+  const strengths=Array.isArray(a.strengths)?a.strengths:[];
+  const improvements=Array.isArray(a.improvements)?a.improvements:[];
+  const evidence=Array.isArray(a.evidence)?a.evidence:[];
+
+  return `<section class="round-analysis-card">
+    <div class="round-analysis-head">
+      <div class="round-score">
+        <strong>${Number(a.score||0)}</strong>
+        <span>100点満点</span>
+      </div>
+      <div>
+        <div class="round-grade">ラウンド評価 ${esc(a.grade||"-")}</div>
+        <div class="round-analysis-summary">${esc(a.summary||"分析データがありません。")}</div>
+        <div class="round-priority">優先して確認：${esc(a.priority||"キルマップを確認")}</div>
+      </div>
+    </div>
+
+    <div class="round-analysis-columns">
+      <div class="round-analysis-box good">
+        <h3>良かった点</h3>
+        <ul>${strengths.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>特記事項なし</li>"}</ul>
+      </div>
+      <div class="round-analysis-box bad">
+        <h3>見直したい点</h3>
+        <ul>${improvements.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>特記事項なし</li>"}</ul>
+      </div>
+    </div>
+
+    ${evidence.length?`<div class="round-evidence">${evidence.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+    <div class="round-analysis-note">${esc(a.note||"")}</div>
+  </section>`;
+}
+
+function renderEventDetail(e,r){
+  if(!e)return`<div class="empty">このラウンドにはキルイベントがありません。</div>`;
+
+  const type=eventType(e);
+  const killer=eventPlayer(e.killer);
+  const victim=eventPlayer(e.victim);
+  const killerAgent=playerAgentName(killer);
+  const victimAgent=playerAgentName(victim);
+  const killerAccount=playerAccountName(killer);
+  const victimAccount=playerAccountName(victim);
+
+  return `<div class="event-detail">
+    <div class="event-time">${time(e.timeMs)} / ROUND ${selectedRound}</div>
+    <div class="event-main ${type==="my-kill"?"good":type==="my-death"?"bad":""}">
+      ${esc(eventLabel(e))}
+      <span class="event-main-sub">${esc(killerAccount)} → ${esc(victimAccount)}</span>
+    </div>
+
+    <div class="event-agent-row">
+      <div class="event-agent ${playerTeamClass(killer)}">${killer.agentIcon?`<img src="${esc(killer.agentIcon)}" alt="${esc(killerAgent)}">`:""}</div>
+      <div class="event-versus">
+        <div class="event-agent-name">${esc(killerAgent)} → ${esc(victimAgent)}</div>
+        <div class="event-account-name">${esc(killerAccount)} → ${esc(victimAccount)}</div>
+      </div>
+      <div class="event-agent ${playerTeamClass(victim)}">${victim.agentIcon?`<img src="${esc(victim.agentIcon)}" alt="${esc(victimAgent)}">`:""}</div>
+    </div>
+
+    <div class="event-row"><span>倒したキャラ</span><span class="event-value"><span class="event-player-main">${esc(killerAgent)}</span><span class="event-player-sub">${esc(killerAccount)}</span></span></div>
+    <div class="event-row"><span>倒されたキャラ</span><span class="event-value"><span class="event-player-main">${esc(victimAgent)}</span><span class="event-player-sub">${esc(victimAccount)}</span></span></div>
+    <div class="event-row"><span>使用武器</span><span class="event-value">${esc(e.weapon)}</span></div>
+
+    <div class="round-stats">
+      <div class="stat"><span>このラウンドのK/D</span><strong>${Number(r.kills||0)}/${Number(r.deaths||0)}</strong></div>
+      <div class="stat"><span>与えたダメージ</span><strong>${Number(r.damage||0)}</strong></div>
+      <div class="stat"><span>あなたの装備額</span><strong>${Number(r.loadoutValue||0).toLocaleString()}</strong></div>
+      <div class="stat"><span>チームの装備差</span><strong>${Number(r.loadoutDifference||0)>=0?"+":""}${Number(r.loadoutDifference||0).toLocaleString()}</strong></div>
+    </div>
+  </div>`;
+}
+function renderEventCard(e,i){
+  const killerAgent=playerAgentName(e.killer);
+  const victimAgent=playerAgentName(e.victim);
+  const killerAccount=playerAccountName(e.killer);
+  const victimAccount=playerAccountName(e.victim);
+
+  return `<button class="event-card ${eventType(e)} ${e.id===selectedEventId?"active":""}" data-event="${esc(e.id)}">
+    <div class="event-card-top"><span class="event-number">${i+1}</span><span>${time(e.timeMs)}</span></div>
+    <div class="event-card-title">${esc(eventLabel(e))}</div>
+    <div class="event-agent-row">
+      <div class="event-agent ${playerTeamClass(eventPlayer(e.killer))}">${eventPlayer(e.killer).agentIcon?`<img src="${esc(eventPlayer(e.killer).agentIcon)}" alt="${esc(killerAgent)}">`:""}</div>
+      <div class="event-versus">
+        <div class="event-agent-name">${esc(killerAgent)} → ${esc(victimAgent)}</div>
+        <div class="event-account-name">${esc(killerAccount)} → ${esc(victimAccount)}</div>
+      </div>
+      <div class="event-agent ${playerTeamClass(eventPlayer(e.victim))}">${eventPlayer(e.victim).agentIcon?`<img src="${esc(eventPlayer(e.victim).agentIcon)}" alt="${esc(victimAgent)}">`:""}</div>
+    </div>
+  </button>`;
+}
+function bind(){
+  document.querySelectorAll("[data-round]").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedRound = Number(button.dataset.round);
+      selectedEventId = "";
+      updateAnalysisUrl();
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-event]").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedEventId = button.dataset.event;
+      updateAnalysisUrl();
+      render();
+    });
+  });
+}
+async function init(){
+  if(!matchId){app.innerHTML='<div class="error">matchIdが指定されていません。試合詳細から開いてください。</div>';return}
+  try{
+    const apiParams=new URLSearchParams({action:"match",matchId:String(matchId||"")});
+    if(params.get("name"))apiParams.set("name",params.get("name"));
+    if(params.get("tag"))apiParams.set("tag",params.get("tag"));
+    const res=await fetch(`api.php?${apiParams.toString()}`);
+    const json=await res.json();
+    if(!res.ok)throw new Error(json.message||json.error||"試合データを取得できませんでした。");
+    detail=json;
+    selectedRound=Number(params.get("round")||detail.rounds?.[0]?.number||1);
+    selectedEventId=params.get("event")||"";
+    render();
+    updateAnalysisUrl();
+  }catch(e){app.innerHTML=`<div class="error">${esc(e.message)}<br><br><a class="back" href="index.html">試合一覧へ戻る</a></div>`}
+}
+init();
+</script>
+</body>
+</html>
