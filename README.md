@@ -57,16 +57,24 @@ VALORANTをプレイする中で、自分の実力が伸び悩んだ時期があ
 
 ```text
 ユーザー
-  ↓
+  ↓ 操作
 ブラウザ / RoundCoach
-  ↓
-HTML・CSS
-  ↓
-JavaScript
-  ↓
-api.php
-  ↓
-HenrikDev API
+  ├─ HTML・CSS：画面の構成・表示
+  └─ JavaScript：入力処理・データ取得要求
+          ↓
+        api.php
+          ↓
+    HenrikDev API
+          ↓ JSON
+        api.php
+          ↓ JSON
+      JavaScript
+          ↓
+   データ加工・統計計算
+          ↓
+      HTMLを更新
+          ↓
+  ブラウザに分析結果を表示
 ```
 
 HenrikDev APIから取得した試合データをJSON形式で受け取り、
