@@ -122,7 +122,7 @@ config.php
 という名前でコピーし、HenrikDev APIのキーを設定します。
 
 `config.php` は `.gitignore` に登録しているため、
-GitHubにはコミットされません。
+GitHubには反映されません。
 
 ---
 
